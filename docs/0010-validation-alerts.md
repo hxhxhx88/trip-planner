@@ -78,7 +78,9 @@ Modify:
 - `src/components/editor/EventRow.tsx` — render `InlineMarker` in the Alert cell.
 - `src/components/editor/TravelRow.tsx` — same.
 - `src/components/editor/EditorShell.tsx` — mount `AlertPanel` as a collapsible drawer.
-- `src/components/editor/timeline/EventBlock.tsx` — inline marker.
+- `src/components/editor/timeline/EventBlock.tsx` — populate the existing `<span aria-label="alert slot">` next to the place name with the `InlineMarker`.
+- `src/components/editor/timeline/TravelConnector.tsx` — add a marker alongside the travel-time chip (no slot yet — add one here).
+- `src/components/editor/timeline/UnscheduledPill.tsx` — same: add a marker per unscheduled entity so `event_missing_place` etc. surface on the pill.
 
 ## Implementation notes
 

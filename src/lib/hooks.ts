@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useSyncExternalStore,
+} from "react";
 
 export type DebouncedCallback<A extends unknown[]> = {
   run: (...args: A) => void;
@@ -55,4 +61,52 @@ export function useDebouncedCallback<A extends unknown[]>(
   useEffect(() => cancel, [cancel]);
 
   return useMemo(() => ({ run, flush, cancel }), [run, flush, cancel]);
+}
+
+const LOCAL_STORAGE_EVENT = "travel-tw:localStorage";
+
+function subscribeLocalStorage(callback: () => void) {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener("storage", callback);
+  window.addEventListener(LOCAL_STORAGE_EVENT, callback);
+  return () => {
+    window.removeEventListener("storage", callback);
+    window.removeEventListener(LOCAL_STORAGE_EVENT, callback);
+  };
+}
+
+export function useLocalStorage<T extends string>(
+  key: string,
+  initial: T,
+): [T, (v: T) => void] {
+  const getSnapshot = useCallback((): T => {
+    try {
+      const raw = window.localStorage.getItem(key);
+      return (raw ?? initial) as T;
+    } catch {
+      return initial;
+    }
+  }, [key, initial]);
+
+  const getServerSnapshot = useCallback((): T => initial, [initial]);
+
+  const value = useSyncExternalStore(
+    subscribeLocalStorage,
+    getSnapshot,
+    getServerSnapshot,
+  );
+
+  const set = useCallback(
+    (v: T) => {
+      try {
+        window.localStorage.setItem(key, v);
+        window.dispatchEvent(new Event(LOCAL_STORAGE_EVENT));
+      } catch {
+        // swallow — private mode, unavailable storage, etc.
+      }
+    },
+    [key],
+  );
+
+  return [value, set];
 }

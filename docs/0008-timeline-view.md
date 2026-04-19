@@ -33,15 +33,37 @@ Product §§5.8 (Timeline), 4.3 (gap path).
 
 No new tables.
 
-New types (`src/components/editor/timeline/types.ts`):
+New types (`src/components/editor/timeline/types.ts`) — landed shape:
 ```ts
 export type TimelineItem =
-  | { kind: 'lodging'; id: string; time: string; label: string; anchor: 'start'|'end' }
-  | { kind: 'event'; id: string; top: number; height: number; startLabel: string; endLabel: string; placeName: string }
-  | { kind: 'travel'; id: string; top: number; height: number; vehicle: Vehicle | null; travelTime: number | null };
+  | { kind: 'lodging'; id: string; time: string; label: string | null;
+      anchor: 'start' | 'end'; top: number }
+  | { kind: 'event'; id: string; top: number; height: number;
+      startLabel: string; endLabel: string; placeName: string | null }
+  | { kind: 'travel'; id: string; top: number; height: number;
+      vehicle: Vehicle | null; travelTime: number | null;
+      status: 'span' | 'chip' };
+
+export type TimelineUnscheduled =
+  | { kind: 'event'; id: string; placeName: string | null;
+      reason: 'no-start' | 'no-duration' }
+  | { kind: 'travel'; id: string; vehicle: Vehicle | null;
+      reason: 'no-anchor' };
+
+export type TimelineModel = {
+  dayId: string;
+  axisStartMin: number;      // may be < 360 when content escapes below
+  axisEndMin: number;        // may be > 1440 when content crosses midnight
+  pxPerMin: number;
+  heightPx: number;
+  items: TimelineItem[];
+  unscheduled: TimelineUnscheduled[];
+};
 ```
 
-Positions computed from the Day composition.
+Positions computed from the Day composition by a pure builder
+(`toTimelineModel` in `src/lib/model/timeline.ts`, mirroring the
+`toMapDay` pattern from `0007`).
 
 ## Files
 
@@ -50,11 +72,18 @@ Create:
 - `src/components/editor/timeline/EventBlock.tsx`
 - `src/components/editor/timeline/TravelConnector.tsx`
 - `src/components/editor/timeline/HoursAxis.tsx`
+- `src/components/editor/timeline/UnscheduledPill.tsx`
 - `src/components/editor/timeline/types.ts`
 - `src/components/editor/ViewToggle.tsx`
+- `src/lib/model/timeline.ts` — pure `toTimelineModel(...)` builder.
 
 Modify:
-- `src/components/editor/EditorShell.tsx` — render `ViewToggle` and switch between `TableView` / `TimelineView` in the right pane.
+- `src/components/editor/DayContent.tsx` — becomes `"use client"`; hosts
+  `ViewToggle` in a flex header row next to the day title; swaps
+  `<TableView/>` ↔ `<TimelineView/>` based on the persisted view.
+- `src/lib/hooks.ts` — add `useLocalStorage<T extends string>(key, initial)`,
+  SSR-safe via `useSyncExternalStore` (so sibling instances with the same key
+  stay in sync automatically — useful for the keyboard shortcuts in `0016`).
 
 ## Implementation notes
 
@@ -64,8 +93,9 @@ Modify:
 - **Empty space** — product §4.3 says a 30-min gap between `arrival_time` and next `start_time` is just blank. That's automatic from the math — the travel connector ends at `arrival`, the next event block starts later, and the space between is the empty axis.
 - **Selection** — `selectedId` from Zustand; the matching block/connector gets a ring (Tailwind `ring-2 ring-primary`). Selecting in Timeline also writes to the store (hook into click handler).
 - **Click to edit** — v1 Timeline is primarily read-only (pacing view). Clicking a block switches back to Table and focuses that row. Double-click reserved for future inline edit.
-- **ViewToggle state** — `useLocalStorage('editor:view', 'table')` with a per-plan key. Default `table`.
+- **ViewToggle state** — `useLocalStorage(`editor:view:${planId}`, 'table')` — per-plan key. Default `table`.
 - **Empty days** — no events → Timeline shows only the two lodging markers (or placeholders) and an axis; no empty-state overlay.
+- **Click-to-table persistence** — clicking a block also writes `'table'` to localStorage via the same hook, so the Table state sticks until the user explicitly flips back to Timeline. `0009` revisits this if it harms the map-sync-on-Timeline flow.
 
 ## Verification
 

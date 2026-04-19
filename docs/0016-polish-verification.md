@@ -22,7 +22,7 @@ All previous sub-plans (0001–0015).
 - `error.tsx` per major route — friendly fallback with a "Reload" button.
 - Image optimization: `next/image` on every Place photo with `sizes` attribute; `priority` on the released-page cover.
 - Small-screen polish on editor: editor stays desktop-first; on screens < 1024px, show a "The planner works best on a larger screen — use a released URL on mobile." banner.
-- Keyboard shortcuts in editor: `T` → Table, `Shift+T` → Timeline, `A` → Auto Fill, `N` → add Event, `Cmd+Enter` → submit active field.
+- Keyboard shortcuts in editor: `T` → Table, `Shift+T` → Timeline, `A` → Auto Fill, `N` → add Event, `Cmd+Enter` → submit active field. The Table/Timeline shortcuts flip the persisted view by calling `setView` from `useLocalStorage(`editor:view:${planId}`, 'table')` — since the hook is implemented via `useSyncExternalStore`, the shortcut handler can live anywhere in the editor tree and DayContent will re-render automatically.
 - Favicon + og:image defaults.
 - Final walkthrough of all 7 §9 verification scenarios documented below.
 

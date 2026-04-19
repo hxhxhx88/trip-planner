@@ -74,7 +74,11 @@ src/
     editor/                          # SplitPane, DayTabs, RightPane, DayContent,
                                      # TableView, EventRow, TravelRow, LodgingRow,
                                      # LodgingSlot, VehicleSelect, AddEventButton,
-                                     # AddDayDialog, SelectionHydrator, TimelineView (0008)
+                                     # AddDayDialog, SelectionHydrator,
+                                     # TimelineView + ViewToggle (0008)
+                                     # timeline/ subfolder holds the leaf pieces:
+                                     #   EventBlock, TravelConnector, HoursAxis,
+                                     #   UnscheduledPill, types.ts (0008)
     map/                             # MapProvider, MapPane, Pin, Polyline,
                                      # DaySelector, types (0007)
     places/                          # PlacePicker, PlacePreview, HoursEditor
@@ -88,6 +92,7 @@ src/
   lib/
     time.ts                          # 15-min rounding, TZ helpers, HH:MM ↔ HH:MM:SS bridge, rebaseTimesAcrossTz
     hooks.ts                         # useDebouncedCallback({run, flush, cancel}) (0006)
+                                     # useLocalStorage(key, initial) via useSyncExternalStore (0008)
     cascade.ts                       # pure forward/backward/merge reducer (0011)
     validate.ts                      # pure alert rules (0010)
     google/
@@ -110,6 +115,7 @@ src/
       plans.ts                       # plans-index and single-plan reads (listPlans, getPlan)
       day.ts                         # pure getDayComposition({day, events, travels}) → DayRow[] (0006)
       map.ts                         # pure toMapDay(plan, dayId) → MapDay | null (0007)
+      timeline.ts                    # pure toTimelineModel({day, events, travels, places, pxPerMin}) → TimelineModel (0008)
   stores/
     selection.ts                     # zustand store: { selectedId, hoveredId, currentDayId }
   actions/                           # 'use server' mutation actions grouped by entity

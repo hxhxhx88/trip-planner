@@ -21,6 +21,7 @@ Product §5.8 requires two-way interaction between the Map and the right pane:
 - Bidirectional event wiring:
   - `MapPane`: click pin → `select(entityId)`; click polyline → `select(travelId)`; hover → `hover(id)`.
   - `TableView` / `TimelineView`: click row/block → `select(id)`; hover → `hover(id)`.
+  - Note: `TimelineView` already writes to the selection store on click/hover (established in `0008`). It additionally flips the view to Table on click per spec — reconsider here if the map-sync flow benefits from staying in Timeline (see "Click-to-table tension" below).
 - `MapPane` effect: when `selectedId` changes, if the entity has a lat/lng (Event or Lodging) pan to it with animated zoom; if a Travel, fit bounds to its route. `hoveredId` only styles the marker without moving the map.
 - `TableView` / `TimelineView` effect: when `selectedId` changes and the element is not in view, scroll it into view with `block: 'nearest'`.
 - Visual treatments:
@@ -57,7 +58,7 @@ Modify (no new files):
 - `src/components/map/Pin.tsx` — accept `selected` / `hovered` props; style accordingly.
 - `src/components/map/Polyline.tsx` — same.
 - `src/components/editor/TableView.tsx` — click/hover handlers call the store; row highlight reads from it.
-- `src/components/editor/TimelineView.tsx` — same.
+- `src/components/editor/TimelineView.tsx` — click/hover already wired in `0008`; this milestone adds the scroll-into-view effect on `selectedId` change and (if reconsidered) trims the click-switches-to-Table behavior.
 - `src/components/map/DaySelector.tsx` — already reads `currentDayId`; ensure symmetry.
 
 ## Implementation notes
@@ -69,6 +70,7 @@ Modify (no new files):
 - **Click capture** — the map's background click (non-pin) clears the selection. Use `<Map onClick>` and ignore clicks that have `detail.placeId` or originate from our Marker/Polyline.
 - **Selection continuity across day switch** — when `currentDayId` changes, clear `selectedId` and `hoveredId` (the selected entity is likely no longer rendered).
 - **Performance** — at N events ~20, no issues expected. Virtualization not needed.
+- **Click-to-table tension** — `0008` wired a single-click in Timeline to both select the entity AND flip the view to Table (persisted in `editor:view:${planId}`). Once the Map reacts to `selectedId`, a user who clicks a Timeline block to inspect it on the Map is yanked out of Timeline. Options: (a) keep 0008 spec as-is — users Shift-click or use the toggle to keep Timeline; (b) downgrade Timeline clicks to selection-only, reserve "open in Table" for a dedicated affordance; (c) add a modifier (Cmd/Ctrl + click) for select-without-switch. Decide before wiring the scroll-into-view effect — if we pick (b) or (c), remove the `setView("table")` call in `DayContent.handleOpenInTable`.
 
 ## Verification
 
