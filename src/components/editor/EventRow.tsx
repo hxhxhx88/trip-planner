@@ -12,6 +12,7 @@ import {
 import { toast } from "sonner";
 
 import { updateEvent } from "@/actions/events";
+import { InlineMarker } from "@/components/alerts/InlineMarker";
 import { PlacePicker } from "@/components/places/PlacePicker";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +26,7 @@ import type { PlaceDetails } from "@/lib/google/types";
 import { useDebouncedCallback } from "@/lib/hooks";
 import type { DayEvent } from "@/lib/model/day";
 import type { PlanForEditor } from "@/lib/model/plan";
+import type { Alert } from "@/lib/schemas";
 import { minutesToHhmm, roundToQuarter } from "@/lib/time";
 import { cn } from "@/lib/utils";
 
@@ -42,6 +44,7 @@ type Props = {
   onSelect: () => void;
   onHover: (hovering: boolean) => void;
   registerRef?: (id: string, el: HTMLElement | null) => void;
+  alerts: Alert[];
 };
 
 // CANONICAL HH:MM rule: accept ^(\d{1,2}):(\d{2})$ where h ≤ 23 and m ≤ 59.
@@ -81,6 +84,7 @@ export function EventRow({
   onSelect,
   onHover,
   registerRef,
+  alerts,
 }: Props) {
   const router = useRouter();
   const isOptimistic = event.id.startsWith("opt-");
@@ -357,7 +361,9 @@ export function EventRow({
         {savingField === "remark" ? <SavingDot /> : null}
       </div>
 
-      <div role="cell" />
+      <div role="cell" className="flex items-center justify-center">
+        <InlineMarker alerts={alerts} />
+      </div>
 
       <div role="cell" className="flex items-center justify-end">
         <DropdownMenu>

@@ -18,8 +18,8 @@ Product §§5.4 (Events), 5.5 (Travels), 5.8 (Table), 6 (15-min rounding).
   - Start lodging row (renders via `LodgingRow` wrapping the existing `LodgingSlot`).
   - For each Event at position `p`: a Travel row with integer `position = p - 50`, an Event row. Concretely: events at `100, 200, 300, …`; travels at `50, 150, 250, …` plus a trailing one at `last_event_pos + 50`. Sparse spacing so swaps and inserts don't re-index.
   - End lodging row.
-- Event row columns: Time (start), Duration (minutes), Place, Description (textarea), Remark (textarea), Alert indicator (empty until `0010`), actions (Move up / Move down / Remove).
-- Travel row columns: Vehicle (select: walk/drive/transit/cycle), Travel time (computed display, editable-override later via `0012` flow), Alert indicator, (no actions — travels are implicit).
+- Event row columns: Time (start), Duration (minutes), Place, Description (textarea), Remark (textarea), Alert indicator (empty `role="cell"` slot here; filled by `InlineMarker` in `0010`), actions (Move up / Move down / Remove).
+- Travel row columns: Vehicle (select: walk/drive/transit/cycle), Travel time (computed display, editable-override later via `0012` flow), Alert indicator (same empty slot, filled in `0010`), (no actions — travels are implicit).
 - Inline field editing with local controlled state + debounced (300ms) server action. Per-field "saving…" pip for 200ms after last keystroke.
 - `useOptimistic` for **row** ops: `addEvent`, `removeEvent`, `moveEvent(id, direction)`.
 - 15-min rounding on time entry (both start time and duration): normalize on blur.

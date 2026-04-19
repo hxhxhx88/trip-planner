@@ -116,6 +116,7 @@ src/
       day.ts                         # pure getDayComposition({day, events, travels}) → DayRow[] (0006)
       map.ts                         # pure toMapDay(plan, dayId) → MapDay | null (0007)
       timeline.ts                    # pure toTimelineModel({day, events, travels, places, pxPerMin}) → TimelineModel (0008)
+      alerts.ts                      # cached getAlertsForPlan(planId) — wraps getPlanForEditor + validate (0010)
   stores/
     selection.ts                     # zustand store: { currentDayId, selectedId, selectSource, hoveredId };
                                      #   select(id, source?) · hover(id) debounced 50ms · setCurrentDay clears selection
@@ -220,7 +221,7 @@ export async function renamePlan(input: RenamePlanInput): Promise<Result> {
 - Every action: `safeParse` at top (never `.parse()` — that throws), DB mutate, `updateTag` AFTER the transaction commits, return `Result`.
 - Never throw for business errors — return a `Result` the caller can render. The `Result<T, E>` / `ActionError` / `ok` / `err` / `zodErr` helpers live in `src/lib/actions.ts` (established in `0003`).
 - Import `cacheTag` / `updateTag` from `next/cache` directly; the `unstable_*` aliases are historical.
-- Grouped by entity in `src/actions/{plans,days,events,travels,places,alerts,release}.ts` (alerts/release land in 0010/0013).
+- Grouped by entity in `src/actions/{plans,days,events,travels,places,release}.ts` (release lands in 0013). Alerts are derived, never persisted, so there is no `actions/alerts.ts`; `0010` exposes them via the pure `src/lib/validate.ts` plus the cached `src/lib/model/alerts.ts` wrapper.
 
 **Field-edit actions on `events` / `travels`** add an `expectedUpdatedAt: Date` to the input and return `Result<{ merged: boolean; updatedAt: Date }>` (established in `0006`). The server compares `expectedUpdatedAt` to the row's current `updatedAt`, **always writes** (last-write-wins), and sets `merged: true` when they differ. Clients toast "Merged changes from another tab" + `router.refresh()` on `merged: true`. Compare via `.getTime()` to dodge pg µs / JS ms precision drift. Row-level ops (`addEvent`, `removeEvent`, `moveEvent`) skip the check.
 

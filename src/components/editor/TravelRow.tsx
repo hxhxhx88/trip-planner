@@ -5,9 +5,10 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { updateTravel } from "@/actions/travels";
+import { InlineMarker } from "@/components/alerts/InlineMarker";
 import { VehicleSelect } from "@/components/editor/VehicleSelect";
 import type { DayTravel } from "@/lib/model/day";
-import type { Vehicle } from "@/lib/schemas";
+import type { Alert, Vehicle } from "@/lib/schemas";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -18,6 +19,7 @@ type Props = {
   onSelect: () => void;
   onHover: (hovering: boolean) => void;
   registerRef?: (id: string, el: HTMLElement | null) => void;
+  alerts: Alert[];
 };
 
 export function TravelRow({
@@ -28,6 +30,7 @@ export function TravelRow({
   onSelect,
   onHover,
   registerRef,
+  alerts,
 }: Props) {
   const router = useRouter();
   const [vehicle, setVehicle] = useState<Vehicle | null>(
@@ -86,7 +89,9 @@ export function TravelRow({
             : "Auto Fill to compute"
           : "Pick a vehicle to estimate travel time"}
       </div>
-      <div role="cell" />
+      <div role="cell" className="flex items-center justify-center">
+        <InlineMarker alerts={alerts} />
+      </div>
       <div role="cell" />
     </div>
   );

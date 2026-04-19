@@ -122,7 +122,7 @@ export type PlaceHours = {
 
 - `VehicleSchema = z.enum(['walk','drive','transit','cycle'])`
 - `TimeHHMMSchema = z.string().regex(/^([01]\d|2[0-3]):([03]0|[14]5|00)$/)` — 15-min granularity enforced at type level.
-- `AlertSchema`:
+- `AlertSchema` (stub here; **finalized in `0010`** with a closed `ALERT_CODES` enum and an optional `hint` field):
   ```ts
   z.object({
     severity: z.enum(['issue', 'warning']),

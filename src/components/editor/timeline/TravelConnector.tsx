@@ -2,8 +2,9 @@
 
 import { Bike, Bus, Car, Footprints } from "lucide-react";
 
+import { InlineMarker } from "@/components/alerts/InlineMarker";
 import type { TimelineItem } from "@/components/editor/timeline/types";
-import type { Vehicle } from "@/lib/schemas";
+import type { Alert, Vehicle } from "@/lib/schemas";
 import { cn } from "@/lib/utils";
 
 const VEHICLE_ICON: Record<
@@ -22,6 +23,7 @@ type Props = {
   onClick: () => void;
   onHover: (hovering: boolean) => void;
   registerRef?: (id: string, el: HTMLElement | null) => void;
+  alerts: Alert[];
 };
 
 export function TravelConnector({
@@ -30,6 +32,7 @@ export function TravelConnector({
   onClick,
   onHover,
   registerRef,
+  alerts,
 }: Props) {
   const Icon = item.vehicle ? VEHICLE_ICON[item.vehicle] : null;
   const hasTime = item.travelTime != null;
@@ -63,6 +66,9 @@ export function TravelConnector({
       >
         {Icon ? <Icon className="size-3" /> : null}
         {label}
+        {alerts.length > 0 ? (
+          <InlineMarker alerts={alerts} className="ml-0.5" />
+        ) : null}
       </button>
     </div>
   );

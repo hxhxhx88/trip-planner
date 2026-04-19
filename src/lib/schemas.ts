@@ -14,14 +14,32 @@ export type EntityType = (typeof ENTITY_TYPES)[number];
 export const ALERT_SEVERITIES = ["issue", "warning"] as const;
 export type AlertSeverity = (typeof ALERT_SEVERITIES)[number];
 
+export const ALERT_CODES = [
+  "day_missing_lodging",
+  "day_missing_end_lodging",
+  "day_duplicate_date",
+  "event_missing_place",
+  "event_outside_hours",
+  "event_closes_during",
+  "travel_missing_vehicle",
+  "travel_tight",
+  "travel_long",
+  "events_overlap",
+  "cascade_unresolved",
+  "gap_long",
+  "place_hours_unknown",
+] as const;
+export type AlertCode = (typeof ALERT_CODES)[number];
+
 export const AlertSchema = z.object({
   severity: z.enum(ALERT_SEVERITIES),
-  code: z.string(),
+  code: z.enum(ALERT_CODES),
   entity: z.object({
     type: z.enum(ENTITY_TYPES),
     id: z.string(),
   }),
   message: z.string(),
+  hint: z.string().optional(),
 });
 export type Alert = z.infer<typeof AlertSchema>;
 

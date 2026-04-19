@@ -3,13 +3,15 @@
 import { DayContent } from "@/components/editor/DayContent";
 import { DayTabs } from "@/components/editor/DayTabs";
 import type { PlanForEditor } from "@/lib/model/plan";
+import type { Alert } from "@/lib/schemas";
 import { useSelection } from "@/stores/selection";
 
 type Props = {
   data: PlanForEditor;
+  alertsByEntity: Record<string, Alert[]>;
 };
 
-export function RightPane({ data }: Props) {
+export function RightPane({ data, alertsByEntity }: Props) {
   const currentDayId = useSelection((s) => s.currentDayId);
   const day =
     data.days.find((d) => d.id === currentDayId) ?? data.days[0] ?? null;
@@ -29,6 +31,7 @@ export function RightPane({ data }: Props) {
           events={data.events}
           travels={data.travels}
           places={data.places}
+          alertsByEntity={alertsByEntity}
         />
       ) : (
         <div className="p-6 text-sm text-muted-foreground">

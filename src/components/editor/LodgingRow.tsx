@@ -1,7 +1,9 @@
 "use client";
 
+import { InlineMarker } from "@/components/alerts/InlineMarker";
 import { LodgingSlot } from "@/components/editor/LodgingSlot";
 import type { PlanForEditor } from "@/lib/model/plan";
+import type { Alert } from "@/lib/schemas";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -17,6 +19,7 @@ type Props = {
   onSelect: () => void;
   onHover: (hovering: boolean) => void;
   registerRef?: (id: string, el: HTMLElement | null) => void;
+  alerts: Alert[];
 };
 
 export function LodgingRow({
@@ -32,6 +35,7 @@ export function LodgingRow({
   onSelect,
   onHover,
   registerRef,
+  alerts,
 }: Props) {
   return (
     <div
@@ -41,21 +45,24 @@ export function LodgingRow({
       onMouseEnter={() => onHover(true)}
       onMouseLeave={() => onHover(false)}
       className={cn(
-        "border-l-2 px-3 py-2 transition-colors",
+        "flex items-center gap-2 border-l-2 px-3 py-2 transition-colors",
         selected
           ? "border-primary bg-primary/5"
           : "border-amber-500/70 bg-amber-50/40 dark:border-amber-400/60 dark:bg-amber-950/20",
         hovered && !selected && "bg-muted/30",
       )}
     >
-      <LodgingSlot
-        planId={planId}
-        dayId={dayId}
-        slot={slot}
-        placeId={placeId}
-        places={places}
-        prevDayLodgingPlaceId={prevDayLodgingPlaceId}
-      />
+      <div className="min-w-0 flex-1">
+        <LodgingSlot
+          planId={planId}
+          dayId={dayId}
+          slot={slot}
+          placeId={placeId}
+          places={places}
+          prevDayLodgingPlaceId={prevDayLodgingPlaceId}
+        />
+      </div>
+      <InlineMarker alerts={alerts} className="shrink-0" />
     </div>
   );
 }

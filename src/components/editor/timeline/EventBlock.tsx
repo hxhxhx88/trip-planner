@@ -1,6 +1,8 @@
 "use client";
 
+import { InlineMarker } from "@/components/alerts/InlineMarker";
 import type { TimelineItem } from "@/components/editor/timeline/types";
+import type { Alert } from "@/lib/schemas";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -9,6 +11,7 @@ type Props = {
   onClick: () => void;
   onHover: (hovering: boolean) => void;
   registerRef?: (id: string, el: HTMLElement | null) => void;
+  alerts: Alert[];
 };
 
 export function EventBlock({
@@ -17,6 +20,7 @@ export function EventBlock({
   onClick,
   onHover,
   registerRef,
+  alerts,
 }: Props) {
   return (
     <button
@@ -37,7 +41,9 @@ export function EventBlock({
             <span className="text-muted-foreground italic">No place</span>
           )}
         </span>
-        <span aria-label="alert slot" className="ml-auto shrink-0" />
+        <span aria-label="alert slot" className="ml-auto shrink-0">
+          <InlineMarker alerts={alerts} />
+        </span>
       </span>
       <span className="text-[10px] tabular-nums text-muted-foreground">
         {item.startLabel}–{item.endLabel}

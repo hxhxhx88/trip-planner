@@ -17,7 +17,7 @@ Product §§5.8 (Timeline), 4.3 (gap path).
 - `TimelineView` component rendering the current Day:
   - Vertical axis 06:00 → 24:00 by default (auto-extends to show all content).
   - Pixel-to-minute ratio: default 1px = 2min (30px = 1hour). Configurable via a prop for future density settings.
-  - Event blocks: positioned by `startTime`, height by `stayDuration`; shows Place name, time range, alert dot slot.
+  - Event blocks: positioned by `startTime`, height by `stayDuration`; shows Place name, time range, and an empty `<span aria-label="alert slot">` next to the name that `0010` fills with `InlineMarker`.
   - Travel connectors: short line with vehicle icon and rounded travel-time label. If `routePath` / `travelTime` unknown, connector is a dashed line with "travel time TBD".
   - Empty space rendered as blank axis (no entity) — matches product §4.3.
   - Lodging markers at the axis top (start) and bottom (end).

@@ -11,6 +11,7 @@ import type { TimelineItem } from "@/components/editor/timeline/types";
 import type { DayEvent, DayRef, DayTravel } from "@/lib/model/day";
 import type { PlanForEditor } from "@/lib/model/plan";
 import { toTimelineModel } from "@/lib/model/timeline";
+import type { Alert } from "@/lib/schemas";
 import { cn } from "@/lib/utils";
 import { useSelection } from "@/stores/selection";
 
@@ -19,6 +20,7 @@ type Props = {
   events: DayEvent[];
   travels: DayTravel[];
   places: PlanForEditor["places"];
+  alertsByEntity: Record<string, Alert[]>;
   pxPerMin?: number;
   onSelect: (id: string) => void;
 };
@@ -28,6 +30,7 @@ export function TimelineView({
   events,
   travels,
   places,
+  alertsByEntity,
   pxPerMin = 0.5,
   onSelect,
 }: Props) {
@@ -84,6 +87,7 @@ export function TimelineView({
               onClick={() => onSelect(item.id)}
               onHover={(h) => hover(h ? item.id : null)}
               registerRef={registerRef}
+              alerts={alertsByEntity[item.id] ?? []}
             />
           ))}
           {eventItems.map((item) => (
@@ -94,6 +98,7 @@ export function TimelineView({
               onClick={() => onSelect(item.id)}
               onHover={(h) => hover(h ? item.id : null)}
               registerRef={registerRef}
+              alerts={alertsByEntity[item.id] ?? []}
             />
           ))}
         </div>
@@ -104,6 +109,7 @@ export function TimelineView({
         onSelect={onSelect}
         onHover={hover}
         registerRef={registerRef}
+        alertsByEntity={alertsByEntity}
       />
     </div>
   );

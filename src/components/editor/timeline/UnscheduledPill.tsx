@@ -2,8 +2,9 @@
 
 import { Bike, Bus, Car, Footprints } from "lucide-react";
 
+import { InlineMarker } from "@/components/alerts/InlineMarker";
 import type { TimelineUnscheduled } from "@/components/editor/timeline/types";
-import type { Vehicle } from "@/lib/schemas";
+import type { Alert, Vehicle } from "@/lib/schemas";
 import { cn } from "@/lib/utils";
 
 const VEHICLE_ICON: Record<
@@ -27,6 +28,7 @@ type Props = {
   onSelect: (id: string) => void;
   onHover: (id: string | null) => void;
   registerRef?: (id: string, el: HTMLElement | null) => void;
+  alertsByEntity: Record<string, Alert[]>;
 };
 
 export function UnscheduledPill({
@@ -35,6 +37,7 @@ export function UnscheduledPill({
   onSelect,
   onHover,
   registerRef,
+  alertsByEntity,
 }: Props) {
   if (items.length === 0) return null;
 
@@ -46,6 +49,7 @@ export function UnscheduledPill({
       <ul className="flex flex-wrap gap-1.5">
         {items.map((item) => {
           const selected = selectedId === item.id;
+          const itemAlerts = alertsByEntity[item.id] ?? [];
           if (item.kind === "event") {
             return (
               <li key={item.id}>
@@ -66,6 +70,9 @@ export function UnscheduledPill({
                   <span className="text-muted-foreground">
                     · {EVENT_REASON_LABEL[item.reason]}
                   </span>
+                  {itemAlerts.length > 0 ? (
+                    <InlineMarker alerts={itemAlerts} />
+                  ) : null}
                 </button>
               </li>
             );
@@ -86,6 +93,9 @@ export function UnscheduledPill({
               >
                 {Icon ? <Icon className="size-3" /> : null}
                 <span>travel · no anchor</span>
+                {itemAlerts.length > 0 ? (
+                  <InlineMarker alerts={itemAlerts} />
+                ) : null}
               </button>
             </li>
           );

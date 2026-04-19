@@ -22,6 +22,7 @@ import {
   type DayTravel,
 } from "@/lib/model/day";
 import type { PlanForEditor } from "@/lib/model/plan";
+import type { Alert } from "@/lib/schemas";
 import { useSelection } from "@/stores/selection";
 
 type Props = {
@@ -31,6 +32,7 @@ type Props = {
   events: PlanForEditor["events"];
   travels: PlanForEditor["travels"];
   places: PlanForEditor["places"];
+  alertsByEntity: Record<string, Alert[]>;
 };
 
 type OptimisticAction =
@@ -170,6 +172,7 @@ export function TableView({
   events,
   travels,
   places,
+  alertsByEntity,
 }: Props) {
   const router = useRouter();
   const composition = getDayComposition({ day, events, travels });
@@ -258,6 +261,7 @@ export function TableView({
               onSelect={() => select(id, "pane")}
               onHover={handleHoverCallback(id)}
               registerRef={registerRef}
+              alerts={alertsByEntity[id] ?? []}
             />
           );
         }
@@ -278,6 +282,7 @@ export function TableView({
               onSelect={() => select(id, "pane")}
               onHover={handleHoverCallback(id)}
               registerRef={registerRef}
+              alerts={alertsByEntity[id] ?? []}
             />
           );
         }
@@ -293,6 +298,7 @@ export function TableView({
               onSelect={() => select(id, "pane")}
               onHover={handleHoverCallback(id)}
               registerRef={registerRef}
+              alerts={alertsByEntity[id] ?? []}
             />
           );
         }
@@ -314,6 +320,7 @@ export function TableView({
             onSelect={() => select(id, "pane")}
             onHover={handleHoverCallback(id)}
             registerRef={registerRef}
+            alerts={alertsByEntity[id] ?? []}
           />
         );
       })}

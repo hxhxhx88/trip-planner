@@ -32,7 +32,7 @@ Product §5.7, §8 Q5 (resolved: show all alerts on released page), §9 scenario
     2. Long gap: arrival → next start > 60 min → `gap_long`
     3. Travel time exceeds vehicle threshold (walk 45m, cycle 60m, drive 90m, transit 120m) → `travel_long`
     4. No business hours data on Place → `place_hours_unknown`
-- `AlertPanel` component in the editor's right rail (collapsible). Shows alerts for the current Day grouped by severity, each with a click-to-focus that calls `select(entityId)`.
+- `AlertPanel` component mounted at `EditorShell` as a third grid column to the right of the `SplitPane` (`grid-cols-[1fr_auto]`). Collapsible: 36px strip with plan-wide severity counts when closed, 320px drawer when open. Shows alerts for the current Day grouped by severity, each with a click-to-focus that calls `select(entityId)` (and `setCurrentDay` if the alert belongs to another day).
 - Inline markers on Event / Travel / Day headers (Table + Timeline): red dot (Issue) / yellow dot (Warning); tooltip with the first message; badge with count if >1.
 - Alerts are also computed per-Plan (not just per-Day) so the Plan-level header shows a consolidated count.
 
@@ -45,18 +45,21 @@ Product §5.7, §8 Q5 (resolved: show all alerts on released page), §9 scenario
 
 No new tables (alerts are always derived, never persisted).
 
-Final Alert shape (`src/lib/schemas.ts`):
+Final Alert shape (`src/lib/schemas.ts`). The codes are exported as a separate `ALERT_CODES` const so other modules (Auto Fill in `0011`, released page in `0013`) can import the same union type:
 ```ts
+export const ALERT_CODES = [
+  'day_missing_lodging', 'day_missing_end_lodging', 'day_duplicate_date',
+  'event_missing_place', 'event_outside_hours', 'event_closes_during',
+  'travel_missing_vehicle', 'travel_tight', 'travel_long',
+  'events_overlap', 'cascade_unresolved', 'gap_long', 'place_hours_unknown',
+] as const;
+export type AlertCode = (typeof ALERT_CODES)[number];
+
 export const AlertSchema = z.object({
-  severity: z.enum(['issue', 'warning']),
-  code: z.enum([
-    'day_missing_lodging', 'day_missing_end_lodging', 'day_duplicate_date',
-    'event_missing_place', 'event_outside_hours', 'event_closes_during',
-    'travel_missing_vehicle', 'travel_tight', 'travel_long',
-    'events_overlap', 'cascade_unresolved', 'gap_long', 'place_hours_unknown',
-  ]),
+  severity: z.enum(ALERT_SEVERITIES),
+  code: z.enum(ALERT_CODES),
   entity: z.object({
-    type: z.enum(['plan','day','event','travel']),
+    type: z.enum(ENTITY_TYPES),
     id: z.string(),
   }),
   message: z.string(),
@@ -75,12 +78,18 @@ Create:
 - `src/lib/model/alerts.ts` — `getAlertsForPlan(planId)`: cached; rebuilds on `updateTag('plan:${planId}')`.
 
 Modify:
+- `src/lib/schemas.ts` — tighten `AlertSchema.code` to the `ALERT_CODES` enum and add the optional `hint` field (the stub from `0001` becomes final here).
+- `src/components/editor/EditorShell.tsx` — compute `alerts = useMemo(() => validate(data), [data])`, build `alertsByEntity` keyed by UI id (`lodging-start:${dayId}` / `lodging-end:${dayId}` for day-level codes, otherwise the entity id), and mount `AlertPanel` as the second column of a `grid-cols-[1fr_auto]` wrapper.
+- `src/components/editor/RightPane.tsx` — accept and forward `alertsByEntity` to `DayContent`.
+- `src/components/editor/DayContent.tsx` — accept `alertsByEntity`, render a small issue/warning count badge next to the day title, and forward to `TableView` / `TimelineView`.
+- `src/components/editor/TableView.tsx` — pass per-row alerts (`alertsByEntity[row.id] ?? []`) to each `LodgingRow` / `EventRow` / `TravelRow`.
 - `src/components/editor/EventRow.tsx` — render `InlineMarker` in the Alert cell.
 - `src/components/editor/TravelRow.tsx` — same.
-- `src/components/editor/EditorShell.tsx` — mount `AlertPanel` as a collapsible drawer.
+- `src/components/editor/LodgingRow.tsx` — switch the row to a flex container so `InlineMarker` sits next to the `LodgingSlot` (day-level alerts `day_missing_lodging` / `day_missing_end_lodging` target this row).
+- `src/components/editor/TimelineView.tsx` — accept `alertsByEntity` and forward per-entity slices to `EventBlock`, `TravelConnector`, and `UnscheduledPill`.
 - `src/components/editor/timeline/EventBlock.tsx` — populate the existing `<span aria-label="alert slot">` next to the place name with the `InlineMarker`.
-- `src/components/editor/timeline/TravelConnector.tsx` — add a marker alongside the travel-time chip (no slot yet — add one here).
-- `src/components/editor/timeline/UnscheduledPill.tsx` — same: add a marker per unscheduled entity so `event_missing_place` etc. surface on the pill.
+- `src/components/editor/timeline/TravelConnector.tsx` — render `InlineMarker` inside the travel-time pill alongside the vehicle icon + minutes label.
+- `src/components/editor/timeline/UnscheduledPill.tsx` — accept the whole `alertsByEntity` map and render a marker inside each pill so `event_missing_place` etc. surface on the pill.
 
 ## Implementation notes
 
@@ -90,8 +99,8 @@ Modify:
 - **Rounding** — the "tight connection" rule sees rounded travel times; buffer < 5 min means remainder after last event's end + travel vs next event's start is < 5 min. If exactly 0 but values align, it's still a tight warning; if negative, that's an overlap Issue.
 - **Ordering/duplicates** — de-duplicate alerts that might fire twice (e.g., same overlap registering from two adjacent rows); keep one, on the earlier entity.
 - **Message tone** — short, declarative. "Tsukiji Outer Market closes at 14:00; arrival 14:30." Include numbers.
-- **`AlertPanel`** — collapsible drawer pinned to the right edge of the right pane. Header toggle button shows total count with severity colors. Clicking an alert entry calls `select(alert.entity.id)` so map + pane react.
-- **Re-validation cost** — `validate` is O(events + travels) per plan, microseconds; rerun on every render via the cached model layer.
+- **`AlertPanel`** — mounted at `EditorShell` as the second column of a `grid-cols-[1fr_auto]` wrapper around the `SplitPane`. Collapsed strip is 36px with plan-wide severity counts; expanded drawer is 320px with the current Day's alerts grouped by severity. Clicking an alert entry calls `select(uiTargetId(alert))` (mapping day-level codes to `lodging-start:${dayId}` / `lodging-end:${dayId}`) and `setCurrentDay` if the alert lives on another day, so Map + right pane react in lockstep.
+- **Re-validation cost** — `validate` is O(events + travels) per plan, microseconds; in the editor it runs client-side via `useMemo` over the serialized `PlanForEditor`, so every field edit re-derives alerts immediately without a server round-trip. Server consumers (released page `0013`, PDF `0014`) go through the cached `getAlertsForPlan(planId)` in `src/lib/model/alerts.ts`.
 
 ## Verification
 
