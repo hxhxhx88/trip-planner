@@ -120,6 +120,7 @@ drizzle.config.ts
 - `@react-pdf/renderer` added to `serverExternalPackages`.
 - `unstable_instant = { prefetch: 'static' }` exported from `/` and `/plans/[planId]/edit` after the full data shape settles (audited in `0016`).
 - `useOptimistic` **only** for row-level adds/removes/reorders — never per-field edits (which would require a full reducer across 6+ column mutation shapes).
+- **Current-time rendering must be client-side.** Under `cacheComponents: true`, calling `Date.now()` (or anything that uses it, like `formatDistanceToNow`) in a Server Component throws unless request-time data has been read first. Any "X minutes ago" / "released today" / footer-timestamp UI must live in a `'use client'` leaf. Established by the `TimeAgo` component in `0003`; reapply for the released page (`0013`) and any future now-relative label.
 
 ---
 

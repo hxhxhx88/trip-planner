@@ -64,6 +64,8 @@ Modify:
 - **Open Graph** — pick a good cover photo (first Day's first placed Event). Fallback to plain color card with trip name.
 - **Live edits** — the released page always queries the live plan; edits in the editor appear on next reload. Test: edit a Place description in the editor; refresh `/p/{slug}` on a phone; change visible.
 - **`notFound()`** — if `getPlanIdBySlug` returns null, call `notFound()` (Next 16 async-aware). Renders `not-found.tsx` or a local `p/[slug]/not-found.tsx` for a friendlier message.
+- **Suspense-async-params pattern** — `/p/[slug]/page.tsx` is a dynamic route under Cache Components. Follow the same shape established by `0003`'s settings page and `0004`'s editor page: a synchronous default export that returns `<Suspense fallback={…}><Content paramsPromise={params} /></Suspense>`, with a nested async component that awaits `params` and calls the cached read. See `implementation.md` §3.
+- **No server-side `Date.now()`** — the "Released X minutes ago" / footer timestamp / cover line must not call `formatDistanceToNow` or `new Date()` in a Server Component (Cache Components rejects it). Use a client `TimeAgo`-style leaf, mirroring `src/components/plans/TimeAgo.tsx` from `0003`.
 
 ## Verification
 

@@ -42,6 +42,7 @@ Create:
 - `src/actions/plans.ts`
 - `src/lib/model/plans.ts` — `listPlans()`, `getPlan(id)`, wrapped in `'use cache'` with appropriate tags.
 - `src/components/plans/PlansList.tsx`
+- `src/components/plans/TimeAgo.tsx` — small `'use client'` wrapper around `formatDistanceToNow`. Required because Cache Components forbids `Date.now()` inside Server Components; the "Last edited" cell in the list reads `now`-relative time, so it must hydrate on the client.
 - `src/components/plans/NewPlanDialog.tsx`
 - `src/components/plans/NewPlanTrigger.tsx` — button + dialog pair used inline on `/`.
 - `src/components/plans/PlanRowActions.tsx`
@@ -76,6 +77,7 @@ Install via shadcn CLI:
 - **Status badge** — shadcn's `Badge` ships only `default | secondary | destructive | outline | ghost | link` variants (no `success`). Use `variant="secondary"` for Draft and `variant="outline"` + emerald Tailwind classes (e.g. `border-emerald-500/40 bg-emerald-500/10 text-emerald-600`) for Released.
 - **Dynamic-route Suspense** — the `/plans/[planId]/settings` page awaits `params` + calls the cached `getPlan(id)`. Under `cacheComponents: true`, this pattern requires a `<Suspense>` boundary around the async content; the page component itself must be synchronous. See `implementation.md` §3 "Next 16 specifics we honor" for the project-wide convention.
 - **Sort** — plans list sorted by `updatedAt desc` by default.
+- **`Date.now()` under Cache Components** — Server Components cannot call `Date.now()` (or any `now`-derived helper like `formatDistanceToNow`) without first reading request-time data. The "Last edited" column needs `now`-relative formatting, so it lives in `TimeAgo` (client). Same rule will bite `0013`'s released page if it tries to render "released X minutes ago" server-side.
 
 ## Verification
 

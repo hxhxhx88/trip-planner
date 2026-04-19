@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { formatDistanceToNow } from "date-fns";
 
 import { PlanRowActions } from "@/components/plans/PlanRowActions";
 import { StatusBadge } from "@/components/plans/StatusBadge";
+import { TimeAgo } from "@/components/plans/TimeAgo";
 import type { PlanListRow } from "@/lib/model/plans";
 
 function formatDateRange(firstDate: string | null, lastDate: string | null, dayCount: number) {
@@ -57,7 +57,7 @@ export function PlansList({ rows }: { rows: PlanListRow[] }) {
                 <StatusBadge releasedSlug={row.releasedSlug} />
               </td>
               <td className="px-4 py-3 text-muted-foreground">
-                {formatDistanceToNow(row.updatedAt, { addSuffix: true })}
+                <TimeAgo iso={row.updatedAt.toISOString()} />
               </td>
               <td className="px-4 py-3 text-right">
                 <PlanRowActions planId={row.id} name={row.name} />

@@ -17,7 +17,7 @@ Product §§5.2 (Day & Lodging), 5.8 (views).
 - `SplitPane` layout: fixed left (map placeholder, 50%), scrollable right (right-pane placeholder, 50%). Gutter is fixed-width; no resizable drag in v1.
 - `DayTabs` at the top of the right pane: one tab per Day ordered by date, an "Add Day" button.
 - `AddDayDialog`: date picker, disallows duplicate dates; warns on non-contiguous dates but does not block.
-- Per-Day Lodging slots: `LodgingSlot` component with two picker placeholders (start, end). In `0005` these become real Place pickers; here they're disabled buttons reading "Pick lodging…".
+- Per-Day Lodging slots: `LodgingSlot` component with two picker placeholders (start, end). In `0005` these become real Place pickers; here they're disabled buttons reading "Pick lodging…", or — when a place id is already set on the day (e.g. inherited from the previous day, or set directly in DB) — the resolved place name from `data.places`.
 - `deleteDay` action.
 - Day-inherits-previous-Lodging default: when `addDay` runs and a previous day exists with lodging set, copy its `startLodgingPlaceId` and `endLodgingPlaceId` to the new day.
 - Day selector also lives **at the top of the Map pane** (empty placeholder for now; actual Map arrives in `0007`). Both use the same `currentDayId` from the Zustand store (defined here, even though the Map subscribes later).

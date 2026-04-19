@@ -61,9 +61,12 @@ Create:
 - `src/lib/model/map.ts` — `getMapDay(planId, dayId)` returning `MapDay` (cached).
 
 Modify:
-- `src/components/editor/EditorShell.tsx` — mount `MapPane` on the left; remove placeholder.
+- `src/components/editor/EditorShell.tsx` — mount `MapPane` on the left in place of `MapPanePlaceholder` (the `0004` shell renders the placeholder; this milestone swaps it out and deletes `MapPanePlaceholder.tsx`).
 - `src/app/layout.tsx` — mount `MapProvider`.
 - `.env.example` — note that `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` is separate from the server-only `GOOGLE_MAPS_API_KEY` for client-map rendering. Document restriction (referrer-scope) in a comment.
+
+Install:
+- `pnpm add @vis.gl/react-google-maps` — chosen in `implementation.md` §2 but deferred to this milestone (not installed by `0001`/`0004`).
 
 ## Implementation notes
 
