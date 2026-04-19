@@ -1,0 +1,372 @@
+import { StyleSheet } from "@react-pdf/renderer";
+
+import { FONT_MONO, FONT_SANS } from "@/components/pdf/fonts";
+
+export const COLORS = {
+  background: "#FFFFFF",
+  foreground: "#1F1F1F",
+  muted: "#F4F4F4",
+  mutedForeground: "#737373",
+  border: "#EBEBEB",
+  primary: "#343434",
+  primarySoft: "#E6E6E6",
+  accent: "#F8F8F8",
+  destructive: "#E74C3C",
+  warning: "#D97706",
+};
+
+export const PAGE = {
+  size: "A4" as const,
+  margin: 36,
+};
+
+export const styles = StyleSheet.create({
+  page: {
+    fontFamily: FONT_SANS,
+    fontSize: 10,
+    color: COLORS.foreground,
+    backgroundColor: COLORS.background,
+    paddingTop: PAGE.margin,
+    paddingBottom: PAGE.margin + 24,
+    paddingHorizontal: PAGE.margin,
+  },
+  section: {
+    marginBottom: 18,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontFamily: FONT_SANS,
+    fontWeight: 700,
+    marginBottom: 8,
+  },
+  h1: {
+    fontSize: 28,
+    fontFamily: FONT_SANS,
+    fontWeight: 700,
+    letterSpacing: -0.4,
+    color: COLORS.foreground,
+  },
+  h2: {
+    fontSize: 18,
+    fontFamily: FONT_SANS,
+    fontWeight: 700,
+  },
+  h3: {
+    fontSize: 12,
+    fontFamily: FONT_SANS,
+    fontWeight: 700,
+  },
+  meta: {
+    fontSize: 9,
+    color: COLORS.mutedForeground,
+  },
+  muted: {
+    color: COLORS.mutedForeground,
+  },
+  mono: {
+    fontFamily: FONT_MONO,
+  },
+  hr: {
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    marginVertical: 10,
+  },
+  // Cover
+  coverPage: {
+    fontFamily: FONT_SANS,
+    backgroundColor: COLORS.background,
+    color: COLORS.foreground,
+    padding: 0,
+  },
+  coverBand: {
+    backgroundColor: COLORS.primary,
+    color: COLORS.background,
+    paddingTop: 96,
+    paddingBottom: 48,
+    paddingHorizontal: PAGE.margin,
+  },
+  coverTitle: {
+    fontSize: 34,
+    fontFamily: FONT_SANS,
+    fontWeight: 700,
+    color: COLORS.background,
+    letterSpacing: -0.6,
+  },
+  coverSubtitle: {
+    marginTop: 8,
+    fontSize: 12,
+    color: COLORS.background,
+    opacity: 0.85,
+  },
+  coverBody: {
+    paddingHorizontal: PAGE.margin,
+    paddingTop: 24,
+  },
+  coverMeta: {
+    fontSize: 11,
+    color: COLORS.mutedForeground,
+    marginBottom: 16,
+  },
+  coverDestLabel: {
+    fontSize: 10,
+    fontFamily: FONT_SANS,
+    fontWeight: 700,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    color: COLORS.mutedForeground,
+    marginBottom: 6,
+  },
+  coverDestItem: {
+    fontSize: 12,
+    marginBottom: 3,
+  },
+  // Overview
+  overviewRow: {
+    flexDirection: "row",
+    gap: 6,
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  overviewDayLabel: {
+    width: 56,
+    fontFamily: FONT_SANS,
+    fontWeight: 700,
+    fontSize: 10,
+  },
+  overviewSummary: {
+    flex: 1,
+    fontSize: 10,
+  },
+  // Per-day
+  dayHeader: {
+    marginBottom: 10,
+  },
+  dayKicker: {
+    fontSize: 9,
+    color: COLORS.mutedForeground,
+    textTransform: "uppercase",
+    letterSpacing: 1.2,
+  },
+  dayTitle: {
+    fontSize: 20,
+    fontFamily: FONT_SANS,
+    fontWeight: 700,
+    letterSpacing: -0.3,
+    marginTop: 2,
+  },
+  daySummary: {
+    fontSize: 10,
+    color: COLORS.mutedForeground,
+    marginTop: 2,
+  },
+  dayGrid: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 16,
+  },
+  timelineFrame: {
+    width: 220,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 4,
+    backgroundColor: COLORS.background,
+    padding: 6,
+  },
+  timelineAxisLabel: {
+    position: "absolute",
+    fontSize: 7,
+    fontFamily: FONT_MONO,
+    color: COLORS.mutedForeground,
+    right: 4,
+  },
+  timelineHourLine: {
+    position: "absolute",
+    left: 36,
+    right: 0,
+    borderTopWidth: 0.5,
+    borderTopColor: COLORS.border,
+  },
+  timelineHalfHourLine: {
+    position: "absolute",
+    left: 36,
+    right: 0,
+    borderTopWidth: 0.25,
+    borderTopColor: COLORS.border,
+    borderStyle: "dashed",
+    opacity: 0.6,
+  },
+  timelineEvent: {
+    position: "absolute",
+    left: 42,
+    right: 6,
+    borderWidth: 0.75,
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.primarySoft,
+    borderRadius: 3,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+  },
+  timelineEventText: {
+    fontSize: 7,
+    fontFamily: FONT_SANS,
+    fontWeight: 700,
+    lineHeight: 1.2,
+  },
+  timelineEventTime: {
+    fontSize: 6,
+    fontFamily: FONT_MONO,
+    color: COLORS.mutedForeground,
+    marginTop: 1,
+  },
+  timelineTravelSpan: {
+    position: "absolute",
+    left: 60,
+    right: 60,
+    borderLeftWidth: 0.5,
+    borderLeftColor: COLORS.mutedForeground,
+  },
+  timelineTravelChip: {
+    position: "absolute",
+    left: 54,
+    right: 24,
+    backgroundColor: COLORS.background,
+    borderWidth: 0.5,
+    borderColor: COLORS.border,
+    borderRadius: 6,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    flexDirection: "row",
+    gap: 3,
+  },
+  timelineTravelChipText: {
+    fontSize: 6,
+    color: COLORS.mutedForeground,
+  },
+  timelineLodgingLabel: {
+    position: "absolute",
+    left: 42,
+    right: 6,
+    flexDirection: "row",
+    gap: 4,
+  },
+  timelineLodgingText: {
+    fontSize: 7,
+    fontFamily: FONT_SANS,
+    fontWeight: 700,
+    color: COLORS.primary,
+  },
+  timelineLodgingTime: {
+    fontSize: 6,
+    fontFamily: FONT_MONO,
+    color: COLORS.mutedForeground,
+  },
+  mapFrame: {
+    flex: 1,
+    minHeight: 220,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 4,
+    overflow: "hidden",
+    backgroundColor: COLORS.muted,
+  },
+  mapImage: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+  },
+  mapPlaceholder: {
+    width: "100%",
+    height: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.muted,
+  },
+  mapPlaceholderText: {
+    fontSize: 10,
+    color: COLORS.mutedForeground,
+  },
+  // DetailCard
+  card: {
+    flexDirection: "row",
+    gap: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 4,
+    marginBottom: 8,
+  },
+  cardPhoto: {
+    width: 120,
+    height: 80,
+    borderRadius: 3,
+    objectFit: "cover",
+    backgroundColor: COLORS.muted,
+  },
+  cardPhotoPlaceholder: {
+    width: 120,
+    height: 80,
+    borderRadius: 3,
+    backgroundColor: COLORS.primarySoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cardPhotoInitials: {
+    fontSize: 22,
+    fontFamily: FONT_SANS,
+    fontWeight: 700,
+    color: COLORS.primary,
+  },
+  cardBody: {
+    flex: 1,
+    gap: 2,
+  },
+  cardName: {
+    fontSize: 12,
+    fontFamily: FONT_SANS,
+    fontWeight: 700,
+  },
+  cardAddress: {
+    fontSize: 9,
+    color: COLORS.mutedForeground,
+  },
+  cardHours: {
+    fontSize: 9,
+    color: COLORS.mutedForeground,
+    fontFamily: FONT_MONO,
+    marginTop: 2,
+  },
+  cardDescription: {
+    fontSize: 9.5,
+    marginTop: 4,
+    lineHeight: 1.45,
+  },
+  cardRemark: {
+    marginTop: 4,
+    paddingLeft: 6,
+    borderLeftWidth: 1.5,
+    borderLeftColor: COLORS.primary,
+    fontSize: 9.5,
+    fontStyle: "italic",
+    color: COLORS.mutedForeground,
+    lineHeight: 1.4,
+  },
+  // Footer
+  footer: {
+    position: "absolute",
+    bottom: 16,
+    left: PAGE.margin,
+    right: PAGE.margin,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    fontSize: 8,
+    color: COLORS.mutedForeground,
+  },
+  footerLeft: {
+    flexDirection: "column",
+    gap: 2,
+  },
+  footerAlert: {
+    color: COLORS.warning,
+  },
+});

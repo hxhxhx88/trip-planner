@@ -89,7 +89,9 @@ src/
     released/                        # ReleasedView, ReleasedDay, ReleasedEventCard,
                                      # ReleasedTravelConnector, ReleasedLodgingCard,
                                      # ReleasedFreeTime, ReleasedAlerts (0013)
-    pdf/                             # Cover, Overview, PerDay, DetailCard (react-pdf, 0014)
+    pdf/                             # BrochureDocument, Cover, Overview, PerDay, DetailCard,
+                                     # Footer, types, styles, fonts (Geist + Helvetica/Courier
+                                     # fallback), format helpers, fixtures (react-pdf, 0014)
   db/
     index.ts                         # drizzle client
     schema.ts                        # tables (see §4)
@@ -206,7 +208,7 @@ Notes:
 | 11 | `0011-autofill-engine.md` | (a) Backfill: Places metadata + Directions via shared cache-aware helpers (`getOrFetchPlaceDetails`, `getOrComputeDirections`); directions rounded up to next 15 min. (b) Cascade reducer: pure forward + backward + merge, respects `lockedFields`, fills empty descriptions from Google's `category`. Engine returns `{ alerts }`; caller owns `updateTag`. Also splits `getPlanForEditor` into cached/uncached pair and exports `dedupeAlerts`. | 0002, 0010 |
 | 12 | `0012-autofill-action.md` | Server action orchestrates 0011 and persists results; "Auto Fill" button in editor header; dirty-state indicator after any edit. | 0011 |
 | 13 | `0013-release-sharing.md` | Release/Unrelease actions + `ReleaseBanner`; `/p/[slug]` mobile-first read-only route; live state from DB via `release:${slug}` tag + existing `plan:${planId}` tag; all alerts shown (grouped per-Day Heads-up + inline dots). PDF download link wired in `0015`. | 0003, 0010 |
-| 14 | `0014-pdf-tree.md` | React-PDF component tree with fixtures: Cover, Overview, PerDay (Timeline + StaticMap + DetailCards), Footer with alert summary. Runnable from a local script for iteration. | 0005 |
+| 14 | `0014-pdf-tree.md` | React-PDF component tree with fixtures: Cover, Overview, PerDay (Timeline + StaticMap + DetailCards), Footer with alert summary. Shared `styles.ts` + `format.ts` helpers; Geist registration with Helvetica/Courier fallback. Runnable from `scripts/pdf-preview.tsx` → `out/preview.pdf` via `pnpm pdf:preview`. | 0005 |
 | 15 | `0015-pdf-route.md` | `/plans/[planId]/pdf/route.ts` streaming handler; Static Maps URL builder; font registration; `serverExternalPackages`. Hooked from editor + released page. | 0014, 0013 |
 | 16 | `0016-polish-verification.md` | `unstable_instant` audit; error boundaries; loading states; image optimization; walk-through of product.md §9 scenarios. | all |
 

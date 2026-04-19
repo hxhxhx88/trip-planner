@@ -26,7 +26,14 @@ Product §5.10, §8 Q4 (compact variant deferred).
 
 ## Schema / types
 
-No new tables.
+No new tables. The `BrochureData` shape is the one established in `0014` (see `src/components/pdf/types.ts`). Key fields `buildBrochureData` must populate:
+
+- `days[].timeline: TimelineModel` — build via `toTimelineModel({ day, events, travels, places, pxPerMin: 0.4 })` from `src/lib/model/timeline.ts`.
+- `days[].mapImagePath: string | null` — the HTTPS URL returned by `staticMap.buildUrl(...)`. (`PerDay` accepts either a URL or a local path; pass URLs here.)
+- `days[].cards[].photoPath: string | null` — `path.join(process.cwd(), 'public/places/', googlePlaceId, '0.jpg')` when the place has a photo and the file exists; else `null`.
+- `days[].cards[].hoursLine` — call `hoursLine(day.date, place.hours)` from `@/components/pdf/format`.
+- `generatedAt` — pre-formatted (e.g. `"Generated 2026-04-19 14:32 UTC"`).
+- `alertSummary` — derived by filtering the plan's `Alert[]` on `severity`.
 
 Types (`src/lib/pdf/data.ts`):
 ```ts
@@ -41,9 +48,11 @@ Create:
 
 Modify:
 - `src/lib/google/staticMap.ts` — implement (stub exists from `0002`).
-- `next.config.ts` — confirm `serverExternalPackages: ['@react-pdf/renderer']` is present (from `0001`).
 - `src/app/plans/[planId]/edit/layout.tsx` — add Download PDF button/link to the Topbar (server component), alongside `AutoFillButton` and `ReleaseBanner`. Links to `/plans/[planId]/pdf` (`target="_blank"`).
 - `src/components/released/ReleasedView.tsx` — add "Download PDF" link to the `<header>` block (between the plan-name title and the day sections). Links to `/plans/[planId]/pdf` with `target="_blank"`. The `planId` is already available as `data.plan.id`.
+
+Not needed (verified during 0014 audit):
+- `next.config.ts` already has `"@react-pdf/renderer"` in `serverExternalPackages` (from `0001`) — no change.
 
 ## Implementation notes
 
@@ -77,7 +86,7 @@ Modify:
 - **Filename** — `{plan-name-slug}-{date-range}.pdf`. Strip non-ASCII for safety; keep Unicode for the `Content-Disposition` RFC 5987 form if we want localized names (nice-to-have).
 - **Caching** — no `'use cache'` on the route handler. The underlying plan read IS cached; generation is cheap. If generation becomes slow (5+ seconds on large plans), revisit.
 - **Error handling** — plan not found → 404; Static Maps URL too long → 500 with message + diagnostic; `renderToStream` throw → 500 with generic message (log full trace).
-- **Fonts bundling** — `@react-pdf/renderer` reads fonts from `public/fonts/` at render time. Confirm the files ship in the build output (Next bundles `public/` automatically). If bundling tries to resolve them as JS modules, register via absolute path using `path.resolve(process.cwd(), 'public/fonts/…')`.
+- **Fonts bundling** — `0014`'s `src/components/pdf/fonts.ts` already resolves TTFs via `path.join(process.cwd(), 'public/fonts/…')`. For a production brand-correct build, place `Geist-Regular.ttf`, `Geist-Bold.ttf`, and `GeistMono-Regular.ttf` under `public/fonts/` before shipping; otherwise the route still streams a valid PDF using the Helvetica/Courier fallback built into `0014`. Next bundles `public/` automatically — no extra config.
 
 ## Verification
 
@@ -87,4 +96,4 @@ Modify:
 4. Crash test: a plan with zero Events → PDF still renders Cover + Overview + a per-day page with only Lodging.
 5. Crash test: a plan where all Events lack `placeId` → static map URL still valid (omits markers/paths); PDF renders with blank map area.
 6. Size: 3-day plan with 9 events produces PDF ≈ 1–2 MB (mostly photos).
-7. Fonts: body text visibly uses Geist; no Helvetica fallback.
+7. Fonts: with `public/fonts/Geist-*.ttf` in place, body text visibly uses Geist; without them, the PDF still streams and renders in the Helvetica/Courier fallback established by `0014`.

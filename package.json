@@ -9,10 +9,12 @@
     "lint": "eslint",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "pdf:preview": "tsx scripts/pdf-preview.tsx"
   },
   "dependencies": {
     "@base-ui/react": "1.4.0",
+    "@react-pdf/renderer": "^4.5.1",
     "@vis.gl/react-google-maps": "^1.8.3",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
@@ -45,6 +47,7 @@
     "eslint-config-next": "16.2.4",
     "shadcn": "4.3.0",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }
