@@ -1,21 +1,27 @@
 import { format, parseISO } from "date-fns";
 
-import { EmptyDay } from "@/components/editor/EmptyDay";
-import { LodgingSlot } from "@/components/editor/LodgingSlot";
+import { TableView } from "@/components/editor/TableView";
 import type { PlanForEditor } from "@/lib/model/plan";
 
 type Props = {
   planId: string;
   day: PlanForEditor["days"][number];
   days: PlanForEditor["days"];
+  events: PlanForEditor["events"];
+  travels: PlanForEditor["travels"];
   places: PlanForEditor["places"];
 };
 
-export function DayContent({ planId, day, days, places }: Props) {
-  const prevDayLodging = findPrevDayLodging(day, days);
-
+export function DayContent({
+  planId,
+  day,
+  days,
+  events,
+  travels,
+  places,
+}: Props) {
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-4 p-6">
       <div>
         <h2 className="text-lg font-semibold">
           {format(parseISO(day.date), "EEEE, MMM d")}
@@ -23,39 +29,14 @@ export function DayContent({ planId, day, days, places }: Props) {
         <p className="text-xs text-muted-foreground">{day.date}</p>
       </div>
 
-      <LodgingSlot
+      <TableView
         planId={planId}
-        dayId={day.id}
-        slot="start"
-        placeId={day.startLodgingPlaceId}
+        day={day}
+        days={days}
+        events={events}
+        travels={travels}
         places={places}
-        prevDayLodgingPlaceId={prevDayLodging}
-      />
-
-      <EmptyDay />
-
-      <LodgingSlot
-        planId={planId}
-        dayId={day.id}
-        slot="end"
-        placeId={day.endLodgingPlaceId}
-        places={places}
-        prevDayLodgingPlaceId={prevDayLodging}
       />
     </div>
   );
-}
-
-function findPrevDayLodging(
-  current: PlanForEditor["days"][number],
-  days: PlanForEditor["days"],
-): string | null {
-  const earlier = days
-    .filter((d) => d.date < current.date)
-    .sort((a, b) => (a.date < b.date ? 1 : -1));
-  for (const d of earlier) {
-    if (d.startLodgingPlaceId) return d.startLodgingPlaceId;
-    if (d.endLodgingPlaceId) return d.endLodgingPlaceId;
-  }
-  return null;
 }

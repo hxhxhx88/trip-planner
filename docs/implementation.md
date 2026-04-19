@@ -71,36 +71,52 @@ src/
       directions/route.ts
   components/
     ui/                              # shadcn primitives (button, dialog, popover, …)
-    editor/                          # SplitPane, DayTabs, TableView, TimelineView, Toolbar
-    map/                             # MapPane, Pin, Polyline, DaySelector
+    editor/                          # SplitPane, DayTabs, RightPane, DayContent,
+                                     # TableView, EventRow, TravelRow, LodgingRow,
+                                     # LodgingSlot, VehicleSelect, AddEventButton,
+                                     # AddDayDialog, SelectionHydrator,
+                                     # MapPanePlaceholder (until 0007), TimelineView (0008)
+    map/                             # MapPane, Pin, Polyline, DaySelector (0007)
     places/                          # PlacePicker, PlacePreview, HoursEditor
-    alerts/                          # AlertPanel, InlineMarker
-    pdf/                             # Cover, Overview, PerDay, DetailCard (react-pdf)
+    plans/                           # PlansList, NewPlanDialog, PlanRowActions, StatusBadge, TimeAgo
+    alerts/                          # AlertPanel, InlineMarker (0010)
+    pdf/                             # Cover, Overview, PerDay, DetailCard (react-pdf, 0014)
   db/
     index.ts                         # drizzle client
     schema.ts                        # tables (see §4)
     migrations/                      # drizzle-kit output
   lib/
-    time.ts                          # 15-min rounding, TZ helpers, HH:MM ↔ HH:MM:SS bridge
-    cascade.ts                       # pure forward/backward/merge reducer
-    validate.ts                      # pure alert rules
+    time.ts                          # 15-min rounding, TZ helpers, HH:MM ↔ HH:MM:SS bridge, rebaseTimesAcrossTz
+    hooks.ts                         # useDebouncedCallback({run, flush, cancel}) (0006)
+    cascade.ts                       # pure forward/backward/merge reducer (0011)
+    validate.ts                      # pure alert rules (0010)
     google/
       places.ts                      # server-side HTTP calls
       directions.ts
       staticMap.ts                   # URL builder
       types.ts                       # response shapes (AutocompleteHit, PlaceDetails, DirectionsResult)
       invalidate.ts                  # admin cache-invalidation helpers
+    geo/
+      inferTz.ts                     # geo-tz wrapper (0005)
+      maybeInfer.ts                  # conditional TZ inference for first-place writes (0005)
+    places/
+      photos.ts                      # ensurePhoto download pipeline → public/places/{id}/{idx}.jpg (0005)
     slug.ts                          # nanoid wrapper (16-char URL-safe)
     schemas.ts                       # shared Zod schemas + PlaceHours / Vehicle / Alert types
     actions.ts                       # Result<T>, ActionError, ok/err/zodErr — server-action return convention
     utils.ts                         # shadcn cn() (clsx + tailwind-merge)
     model/
-      plan.ts                        # read-side composition (plan + days + events + travels resolved)
+      plan.ts                        # read-side composition (plan + days + events + travels + places resolved)
       plans.ts                       # plans-index and single-plan reads (listPlans, getPlan)
+      day.ts                         # pure getDayComposition({day, events, travels}) → DayRow[] (0006)
   stores/
     selection.ts                     # zustand store: { selectedId, hoveredId, currentDayId }
   actions/                           # 'use server' mutation actions grouped by entity
     plans.ts                         # createPlan, renamePlan, setPlanTimezone, duplicatePlan, deletePlan
+    days.ts                          # addDay, deleteDay, setDayLodging, inheritDayLodging
+    events.ts                        # addEvent, updateEvent, removeEvent, moveEvent (0006)
+    travels.ts                       # updateTravel (0006)
+    places.ts                        # setHoursOverride, clearHoursOverride (0005)
 next.config.ts                       # cacheComponents, serverExternalPackages, image remotePatterns
 drizzle.config.ts
 ```
@@ -130,7 +146,7 @@ Drizzle tables (details in `0001-foundations.md`):
 
 | Table | Role |
 |---|---|
-| `plans` | id, name, timezone, released_slug (nullable), created_at, updated_at |
+| `plans` | id, name, timezone, tz_set_by_user, released_slug (nullable), created_at, updated_at |
 | `days` | id, plan_id, date, start_lodging_place_id, end_lodging_place_id, position |
 | `events` | id, day_id, position, place_id, start_time, stay_duration, description, remark, locked_fields (jsonb), updated_at |
 | `travels` | id, day_id, position (between events), vehicle, travel_time, route_path (jsonb), locked_fields (jsonb), updated_at |
@@ -184,19 +200,21 @@ Notes:
 import { updateTag } from 'next/cache';
 import { err, ok, type Result, zodErr } from '@/lib/actions';
 
-export async function updateEvent(input: UpdateEventInput): Promise<Result<void>> {
-  const parsed = UpdateEventSchema.safeParse(input);       // zod boundary
+export async function renamePlan(input: RenamePlanInput): Promise<Result> {
+  const parsed = RenamePlanSchema.safeParse(input);        // zod boundary
   if (!parsed.success) return err(zodErr(parsed.error));
-  await db.update(events).set(parsed.data.patch).where(eq(events.id, parsed.data.id));
-  updateTag(`plan:${parsed.data.planId}`);
+  await db.update(plans).set({ name: parsed.data.name }).where(eq(plans.id, parsed.data.id));
+  updateTag(`plan:${parsed.data.id}`);                     // after the DB write commits
   return ok();
 }
 ```
 
-- Every action: `safeParse` at top (never `.parse()` — that throws), DB mutate, `updateTag`, return `Result`.
+- Every action: `safeParse` at top (never `.parse()` — that throws), DB mutate, `updateTag` AFTER the transaction commits, return `Result`.
 - Never throw for business errors — return a `Result` the caller can render. The `Result<T, E>` / `ActionError` / `ok` / `err` / `zodErr` helpers live in `src/lib/actions.ts` (established in `0003`).
 - Import `cacheTag` / `updateTag` from `next/cache` directly; the `unstable_*` aliases are historical.
-- Grouped by entity in `src/actions/{plans,days,events,travels,places,alerts,release}.ts`.
+- Grouped by entity in `src/actions/{plans,days,events,travels,places,alerts,release}.ts` (alerts/release land in 0010/0013).
+
+**Field-edit actions on `events` / `travels`** add an `expectedUpdatedAt: Date` to the input and return `Result<{ merged: boolean; updatedAt: Date }>` (established in `0006`). The server compares `expectedUpdatedAt` to the row's current `updatedAt`, **always writes** (last-write-wins), and sets `merged: true` when they differ. Clients toast "Merged changes from another tab" + `router.refresh()` on `merged: true`. Compare via `.getTime()` to dodge pg µs / JS ms precision drift. Row-level ops (`addEvent`, `removeEvent`, `moveEvent`) skip the check.
 
 ### Cache tag namespacing
 

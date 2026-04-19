@@ -58,7 +58,7 @@ Create:
 - `src/components/editor/DayTabs.tsx`
 - `src/components/editor/AddDayDialog.tsx`
 - `src/components/editor/LodgingSlot.tsx` (placeholder wiring)
-- `src/components/editor/EmptyDay.tsx` — "Pick a lodging to start the day"
+- `src/components/editor/EmptyDay.tsx` — "Pick a lodging to start the day" (later removed in `0006` once `TableView` owns the day body).
 - `src/stores/selection.ts`
 - `src/actions/days.ts` — `addDay`, `deleteDay`, `setDayLodging` (latter used by `0005`).
 - `src/lib/model/plan.ts` — `getPlanForEditor(planId)` returning the shape the editor renders (plan + days + events + travels + places looked up).

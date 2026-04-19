@@ -29,6 +29,7 @@ export type PlanForEditor = {
     description: string | null;
     remark: string | null;
     lockedFields: string[];
+    updatedAt: Date;
   }>;
   travels: Array<{
     id: string;
@@ -38,6 +39,7 @@ export type PlanForEditor = {
     travelTime: number | null;
     routePath: [number, number][] | null;
     lockedFields: string[];
+    updatedAt: Date;
   }>;
   places: Record<
     string,
@@ -168,6 +170,7 @@ export async function getPlanForEditor(
         description: e.description,
         remark: e.remark,
         lockedFields: e.lockedFields,
+        updatedAt: e.updatedAt,
       })),
     travels: travelsRows
       .slice()
@@ -180,6 +183,7 @@ export async function getPlanForEditor(
         travelTime: t.travelTime,
         routePath: t.routePath,
         lockedFields: t.lockedFields,
+        updatedAt: t.updatedAt,
       })),
     places,
   };

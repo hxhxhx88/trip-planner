@@ -26,6 +26,8 @@ export function RightPane({ data }: Props) {
           planId={data.plan.id}
           day={day}
           days={data.days}
+          events={data.events}
+          travels={data.travels}
           places={data.places}
         />
       ) : (

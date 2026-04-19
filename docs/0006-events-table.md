@@ -15,8 +15,8 @@ Product §§5.4 (Events), 5.5 (Travels), 5.8 (Table), 6 (15-min rounding).
 
 **In:**
 - `TableView` component — renders rows for the current Day:
-  - Start lodging row (read-only, wired by `0004`).
-  - For each Event at position `p`: a Travel row with `position = p - 0.5` (or pre-event), an Event row.
+  - Start lodging row (renders via `LodgingRow` wrapping the existing `LodgingSlot`).
+  - For each Event at position `p`: a Travel row with integer `position = p - 50`, an Event row. Concretely: events at `100, 200, 300, …`; travels at `50, 150, 250, …` plus a trailing one at `last_event_pos + 50`. Sparse spacing so swaps and inserts don't re-index.
   - End lodging row.
 - Event row columns: Time (start), Duration (minutes), Place, Description (textarea), Remark (textarea), Alert indicator (empty until `0010`), actions (Move up / Move down / Remove).
 - Travel row columns: Vehicle (select: walk/drive/transit/cycle), Travel time (computed display, editable-override later via `0012` flow), Alert indicator, (no actions — travels are implicit).
@@ -37,15 +37,15 @@ Product §§5.4 (Events), 5.5 (Travels), 5.8 (Table), 6 (15-min rounding).
 No new tables. Uses existing `events`, `travels`.
 
 New Zod schemas (in `src/actions/events.ts` / `travels.ts`):
-- `AddEventInput = { planId, dayId, afterEventId?: string }` — inserts at position after given (or at end if omitted).
-- `UpdateEventInput = { planId, id, patch: Partial<EditableEventFields> }`
+- `AddEventInput = { planId, dayId }` — appends at end. (Mid-list insertion via `afterEventId` is deferred; the sparse position scheme makes it cheap to add later.)
+- `UpdateEventInput = { planId, id, expectedUpdatedAt: Date, patch: Partial<EditableEventFields> }` → `Result<{ merged: boolean; updatedAt: Date }>`
 - `RemoveEventInput = { planId, id }`
 - `MoveEventInput = { planId, id, direction: 'up'|'down' }`
-- `UpdateTravelInput = { planId, id, patch: Partial<EditableTravelFields> }`
+- `UpdateTravelInput = { planId, id, expectedUpdatedAt: Date, patch: Partial<EditableTravelFields> }` → `Result<{ merged: boolean; updatedAt: Date }>`
 
 Where:
 - `EditableEventFields = { placeId, startTime, stayDuration, description, remark }`
-- `EditableTravelFields = { vehicle }` (travel time/route are only set via Auto Fill in `0012`)
+- `EditableTravelFields = { vehicle }` (travel time/route are only set via Auto Fill in `0012`; setting `vehicle` clears any existing `travelTime`/`routePath` so they get recomputed).
 
 ## Files
 
@@ -55,27 +55,32 @@ Create:
 - `src/components/editor/TableView.tsx`
 - `src/components/editor/EventRow.tsx`
 - `src/components/editor/TravelRow.tsx`
-- `src/components/editor/LodgingRow.tsx`
+- `src/components/editor/LodgingRow.tsx` — thin row wrapper around `LodgingSlot`.
 - `src/components/editor/VehicleSelect.tsx`
 - `src/components/editor/AddEventButton.tsx`
-- `src/lib/model/day.ts` — `getDayComposition(dayId)` returning interleaved rows as a single array.
+- `src/lib/model/day.ts` — pure `getDayComposition({ day, events, travels })` returning a position-sorted `DayRow[]` of `{ kind: 'lodging-start'|'travel'|'event'|'lodging-end', data }`.
+- `src/lib/hooks.ts` — `useDebouncedCallback(fn, ms)` returning `{ run, flush, cancel }`; auto-cancels on unmount.
 
 Modify:
-- `src/components/editor/EditorShell.tsx` — mount `TableView` in the right pane for the current Day.
-- `src/lib/model/plan.ts` — ensure `getPlanForEditor` includes events and travels.
+- `src/components/editor/DayContent.tsx` — replace inline lodging slots + `EmptyDay` with `<TableView />`.
+- `src/components/editor/RightPane.tsx` — pass `events` and `travels` through to `DayContent`.
+- `src/lib/model/plan.ts` — `getPlanForEditor` already returns events and travels; add `updatedAt` to each so the client can send `expectedUpdatedAt`.
+
+Delete:
+- `src/components/editor/EmptyDay.tsx` — superseded by `TableView`'s own empty state.
 
 ## Implementation notes
 
 - **Interleaving** — source of truth is two ordered lists (`events`, `travels`) indexed by `position`. When we render, we interleave client-side; the server never stores the flat sequence. Use positions like 100, 200, 300 (sparse) so moves can happen without re-indexing; periodically rebalance if gaps grow.
 - **Travel invariant** — for N events, there are N+1 travels per day (including from start-lodging and to end-lodging). `addEvent` creates the new event and, if needed, splits the existing travel that "bridged" its slot into two travels. `removeEvent` reverses — the two adjacent travels merge into one (we keep the earlier one, drop the later; user picks vehicle again if they mismatch).
 - **`useOptimistic` scope** — `TableView` wraps the list of rows in a reducer that handles `add`, `remove`, `move`. Field edits are NOT optimistic; they use local controlled state per field and let the server response (via `updateTag` + `refresh`) be the reconciler.
-- **Debouncing** — each field has a `useDebouncedCallback(action, 300)` that fires after idle. On submit Enter: flush immediately.
-- **15-min rounding** — on blur, `roundToQuarter(hhmmToMinutes(value))` and re-render (helpers from `src/lib/time.ts`). Invalid input (e.g. 25:00) rolls back to last committed value.
+- **Debouncing** — each field uses `const d = useDebouncedCallback(save, 300)`; call `d.run(value)` on change, `d.flush()` on Enter / blur, `d.cancel()` is auto-fired on unmount so optimistic-removed rows don't post stale writes.
+- **15-min rounding** — time inputs accept `^(\d{1,2}):(\d{2})$` (single-digit hours OK; minutes must be two digits; rolls back if `h>23` or `m>59`); on blur, `minutesToHhmm(roundToQuarter(h*60+m))`. Duration uses `roundToQuarter(Number(value))`. Invalid input rolls back to the last committed value.
 - **Locked fields** — server action accepts a patch; for each field in the patch, add its name to `lockedFields` (dedupe). Never remove from `lockedFields` unless the field is explicitly cleared (value → null) *and* user is confirming via a small "Unlock" action (v1 keeps it simple: clearing a value keeps it locked with null; Auto Fill still won't overwrite). This is consistent with §8 resolution: "user typed a value = lock".
-- **Concurrent-edit `router.refresh`** — the action returns `{ updatedAt }`; the client compares to the `updatedAt` it knew before sending. If newer than expected (some other tab wrote between your fetch and your mutation), we call `router.refresh()` so the UI re-pulls, and show a subtle toast ("Merged changes from another tab").
+- **Concurrent-edit `router.refresh`** — field-edit actions take `expectedUpdatedAt: Date` in the input and return `Result<{ merged: boolean; updatedAt: Date }>`. The server compares `expectedUpdatedAt` to the row's current `updatedAt`, **always writes** (last-write-wins per the master plan), and sets `merged: true` when the values differ. Client always sends `lastKnownUpdatedAt` (initialised from prop, advanced on each successful save and from prop on revalidation). When `merged === true`, toast "Merged changes from another tab" and call `router.refresh()` so the UI re-pulls. Compare via `.getTime()` to avoid pg µs / JS ms precision drift. Row ops (`addEvent`, `removeEvent`, `moveEvent`) skip the check.
 - **Move up/down** — swap positions of adjacent (event, event); the travels between them don't need to move — they just find new adjacent events via position ordering. Simpler than a full reorder algorithm.
 - **Keyboard** — Tab traverses Time → Duration → Place → Description → Remark. Enter in a field submits; Shift+Enter in a textarea inserts a newline.
-- **`getDayComposition`** — returns a single, position-sorted array of `{ kind: 'lodging-start'|'travel'|'event'|'lodging-end', data }`. Both Table and Timeline (`0008`) consume it.
+- **`getDayComposition`** — pure helper at `src/lib/model/day.ts`. Signature: `getDayComposition({ day, events, travels })` (callers pass the full `PlanForEditor` arrays; the helper filters by `dayId` internally). Returns a position-sorted `DayRow[]` of `{ kind: 'lodging-start'|'travel'|'event'|'lodging-end', data }`. Both Table (here) and Timeline (`0008`) consume it.
 
 ## Verification
 
