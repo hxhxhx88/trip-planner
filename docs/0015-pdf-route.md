@@ -42,7 +42,7 @@ Create:
 Modify:
 - `src/lib/google/staticMap.ts` — implement (stub exists from `0002`).
 - `next.config.ts` — confirm `serverExternalPackages: ['@react-pdf/renderer']` is present (from `0001`).
-- `src/components/editor/EditorShell.tsx` — add Download PDF button.
+- `src/app/plans/[planId]/edit/layout.tsx` — add Download PDF button/link to the Topbar (server component), alongside `AutoFillButton` and `ReleaseBanner`. Links to `/plans/[planId]/pdf` (`target="_blank"`).
 - `src/components/released/ReleasedDay.tsx` (or a new header component) — add Download PDF button.
 
 ## Implementation notes

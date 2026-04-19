@@ -7,6 +7,7 @@ import { z } from "zod";
 import { db, schema } from "@/db";
 import { err, ok, type Result, zodErr } from "@/lib/actions";
 import { maybeInferTimezone } from "@/lib/geo/maybeInfer";
+import { markPlanDirty } from "@/lib/plans/markDirty";
 import { newSlug } from "@/lib/slug";
 
 const PlanIdSchema = z.string().min(1);
@@ -99,6 +100,7 @@ export async function addDay(
     });
   }
 
+  await markPlanDirty(planId);
   updateTag(`plan:${planId}`);
   updateTag("plans:index");
   return ok({ id: outcome.id });
@@ -136,6 +138,7 @@ export async function deleteDay(
     return err({ code: "not_found", message: "Day not found" });
   }
 
+  await markPlanDirty(planId);
   updateTag(`plan:${planId}`);
   updateTag("plans:index");
   return ok();
@@ -162,6 +165,7 @@ export async function setDayLodging(
     return err({ code: "not_found", message: "Day not found" });
   }
 
+  await markPlanDirty(planId);
   updateTag(`plan:${planId}`);
 
   if (placeId) {
@@ -224,6 +228,7 @@ export async function inheritDayLodging(
     });
   }
 
+  await markPlanDirty(planId);
   updateTag(`plan:${planId}`);
   return ok();
 }

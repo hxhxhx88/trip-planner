@@ -15,6 +15,13 @@
       "when": 1776578120773,
       "tag": "0001_fresh_hammerhead",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1776604715340,
+      "tag": "0002_young_roughhouse",
+      "breakpoints": true
     }
   ]
 }

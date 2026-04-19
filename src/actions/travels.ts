@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { db, schema } from "@/db";
 import { err, ok, type Result, zodErr } from "@/lib/actions";
+import { markPlanDirty } from "@/lib/plans/markDirty";
 import { VehicleSchema } from "@/lib/schemas";
 
 const PlanIdSchema = z.string().min(1);
@@ -68,6 +69,7 @@ export async function updateTravel(
     return err({ code: "not_found", message: "Travel not found" });
   }
 
+  await markPlanDirty(planId);
   updateTag(`plan:${planId}`);
   return ok({ merged: outcome.merged, updatedAt: outcome.updatedAt });
 }

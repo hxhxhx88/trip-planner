@@ -50,7 +50,7 @@ Create:
 - `src/lib/model/released.ts` — `getPlanBySlug(slug)`: cached with `cacheTag('release:${slug}')` AND `cacheTag('plan:${planId}')` so edits to the plan (which already call `updateTag('plan:${planId}')`) invalidate the released view automatically.
 
 Modify:
-- `src/components/editor/EditorShell.tsx` — mount `ReleaseBanner`.
+- `src/app/plans/[planId]/edit/layout.tsx` — replace the disabled `Release` button in the Topbar (server component, alongside `AutoFillButton`) with `<ReleaseBanner planId={planId} releasedSlug={plan?.releasedSlug ?? null} />`. The Topbar already calls `getPlan(planId)` which includes `releasedSlug`.
 
 ## Implementation notes
 

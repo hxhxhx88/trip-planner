@@ -19,6 +19,7 @@ export const plans = pgTable("plans", {
   timezone: text("timezone").notNull(),
   tzSetByUser: boolean("tz_set_by_user").default(false).notNull(),
   releasedSlug: text("released_slug").unique(),
+  dirtySince: timestamp("dirty_since", { withTimezone: true }).defaultNow(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

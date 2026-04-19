@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { ArrowLeftIcon, SettingsIcon } from "lucide-react";
 
+import { AutoFillButton } from "@/components/editor/AutoFillButton";
 import { Button } from "@/components/ui/button";
 import { getPlan } from "@/lib/model/plans";
 
@@ -54,14 +55,7 @@ async function Topbar({
             Settings
           </Button>
         </Link>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled
-          title="Available after 0012"
-        >
-          Auto Fill
-        </Button>
+        <AutoFillButton planId={planId} isDirty={plan?.dirtySince != null} />
         <Button size="sm" disabled title="Available after 0013">
           Release
         </Button>

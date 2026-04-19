@@ -95,9 +95,13 @@ src/
                                      # useLocalStorage(key, initial) via useSyncExternalStore (0008)
     cascade.ts                       # pure forward/backward/merge reducer (0011)
     validate.ts                      # pure alert rules (0010)
+    autofill/                        # (0011) orchestrator + backfill + types
+      engine.ts                      # runAutoFillForPlan(planId) → { alerts } (0011)
+      backfill.ts                    # I/O: places metadata + directions via shared cache helpers (0011)
+      types.ts                       # EventUpdate, TravelUpdate, ResolvedDay, CascadeResult (0011)
     google/
-      places.ts                      # server-side HTTP calls
-      directions.ts
+      places.ts                      # server-side HTTP calls + getOrFetchPlaceDetails (0011)
+      directions.ts                  # server-side HTTP calls + getOrComputeDirections (0011)
       staticMap.ts                   # URL builder
       types.ts                       # response shapes (AutocompleteHit, PlaceDetails, DirectionsResult)
       invalidate.ts                  # admin cache-invalidation helpers
@@ -106,6 +110,8 @@ src/
       maybeInfer.ts                  # conditional TZ inference for first-place writes (0005)
     places/
       photos.ts                      # ensurePhoto download pipeline → public/places/{id}/{idx}.jpg (0005)
+    plans/
+      markDirty.ts                   # markPlanDirty(planId) — single UPDATE on plans.dirty_since (0012)
     slug.ts                          # nanoid wrapper (16-char URL-safe)
     schemas.ts                       # shared Zod schemas + PlaceHours / Vehicle / Alert types
     actions.ts                       # Result<T>, ActionError, ok/err/zodErr — server-action return convention
@@ -127,6 +133,7 @@ src/
     events.ts                        # addEvent, updateEvent, removeEvent, moveEvent (0006)
     travels.ts                       # updateTravel (0006)
     places.ts                        # setHoursOverride, clearHoursOverride (0005)
+    autofill.ts                      # runAutoFill(planId) — runs engine, clears dirtySince, updateTag (0012)
 next.config.ts                       # cacheComponents, serverExternalPackages, image remotePatterns
 drizzle.config.ts
 ```
@@ -156,7 +163,7 @@ Drizzle tables (details in `0001-foundations.md`):
 
 | Table | Role |
 |---|---|
-| `plans` | id, name, timezone, tz_set_by_user, released_slug (nullable), created_at, updated_at |
+| `plans` | id, name, timezone, tz_set_by_user, released_slug (nullable), dirty_since (nullable; `defaultNow()` so new plans are born dirty; `runAutoFill` clears it) (0012), created_at, updated_at |
 | `days` | id, plan_id, date, start_lodging_place_id, end_lodging_place_id, position |
 | `events` | id, day_id, position, place_id, start_time, stay_duration, description, remark, locked_fields (jsonb), updated_at |
 | `travels` | id, day_id, position (between events), vehicle, travel_time, route_path (jsonb), locked_fields (jsonb), updated_at |
@@ -222,9 +229,11 @@ export async function renamePlan(input: RenamePlanInput): Promise<Result> {
 - Every action: `safeParse` at top (never `.parse()` — that throws), DB mutate, `updateTag` AFTER the transaction commits, return `Result`.
 - Never throw for business errors — return a `Result` the caller can render. The `Result<T, E>` / `ActionError` / `ok` / `err` / `zodErr` helpers live in `src/lib/actions.ts` (established in `0003`).
 - Import `cacheTag` / `updateTag` from `next/cache` directly; the `unstable_*` aliases are historical.
-- Grouped by entity in `src/actions/{plans,days,events,travels,places,release}.ts` (release lands in 0013). Alerts are derived, never persisted, so there is no `actions/alerts.ts`; `0010` exposes them via the pure `src/lib/validate.ts` plus the cached `src/lib/model/alerts.ts` wrapper.
+- Grouped by entity in `src/actions/{plans,days,events,travels,places,autofill,release}.ts` (autofill lands in 0012; release lands in 0013). Alerts are derived, never persisted, so there is no `actions/alerts.ts`; `0010` exposes them via the pure `src/lib/validate.ts` plus the cached `src/lib/model/alerts.ts` wrapper.
 
 **Field-edit actions on `events` / `travels`** add an `expectedUpdatedAt: Date` to the input and return `Result<{ merged: boolean; updatedAt: Date }>` (established in `0006`). The server compares `expectedUpdatedAt` to the row's current `updatedAt`, **always writes** (last-write-wins), and sets `merged: true` when they differ. Clients toast "Merged changes from another tab" + `router.refresh()` on `merged: true`. Compare via `.getTime()` to dodge pg µs / JS ms precision drift. Row-level ops (`addEvent`, `removeEvent`, `moveEvent`) skip the check.
+
+**Mutations that affect plan composition** (events, travels, days, places — everything except the `plans.ts` metadata mutations) also `await markPlanDirty(planId)` from `@/lib/plans/markDirty` before the existing `updateTag`, so the editor Topbar's `AutoFillButton` flips to primary "Auto Fill" (established in `0012`). `runAutoFill` clears `plans.dirty_since` back to `null` on success. `plans.ts` mutations intentionally skip this — rename / duplicate / timezone rebase don't invalidate derived data.
 
 ### Cache tag namespacing
 

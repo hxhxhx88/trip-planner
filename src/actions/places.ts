@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { db, schema } from "@/db";
 import { err, ok, type Result, zodErr } from "@/lib/actions";
+import { markPlanDirty } from "@/lib/plans/markDirty";
 
 const PlanIdSchema = z.string().min(1);
 const PlaceIdSchema = z.string().min(1);
@@ -69,6 +70,7 @@ export async function setHoursOverride(
       set: { hours: sql`excluded.hours` },
     });
 
+  await markPlanDirty(planId);
   updateTag(`plan:${planId}`);
   return ok();
 }
@@ -89,6 +91,7 @@ export async function clearHoursOverride(
       ),
     );
 
+  await markPlanDirty(planId);
   updateTag(`plan:${planId}`);
   return ok();
 }

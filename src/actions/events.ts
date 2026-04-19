@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { db, schema } from "@/db";
 import { err, ok, type Result, zodErr } from "@/lib/actions";
+import { markPlanDirty } from "@/lib/plans/markDirty";
 import { TimeHHMMSchema } from "@/lib/schemas";
 import { newSlug } from "@/lib/slug";
 import { normalizeTime } from "@/lib/time";
@@ -107,6 +108,7 @@ export async function addEvent(
     return err({ code: "not_found", message: "Day not found" });
   }
 
+  await markPlanDirty(planId);
   updateTag(`plan:${planId}`);
   return ok({ id: outcome.id });
 }
@@ -158,6 +160,7 @@ export async function updateEvent(
     return err({ code: "not_found", message: "Event not found" });
   }
 
+  await markPlanDirty(planId);
   updateTag(`plan:${planId}`);
   return ok({ merged: outcome.merged, updatedAt: outcome.updatedAt });
 }
@@ -219,6 +222,7 @@ export async function removeEvent(
     return err({ code: "not_found", message: "Event not found" });
   }
 
+  await markPlanDirty(planId);
   updateTag(`plan:${planId}`);
   return ok();
 }
@@ -284,6 +288,7 @@ export async function moveEvent(input: MoveEventInputType): Promise<Result> {
     return err({ code: "not_found", message: "Event not found" });
   }
 
+  await markPlanDirty(planId);
   updateTag(`plan:${planId}`);
   return ok();
 }
