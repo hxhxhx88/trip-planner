@@ -34,9 +34,14 @@ type Props = {
   places: PlanForEditor["places"];
   canMoveUp: boolean;
   canMoveDown: boolean;
+  selected: boolean;
+  hovered: boolean;
   onMoveUp: () => void;
   onMoveDown: () => void;
   onRemove: () => void;
+  onSelect: () => void;
+  onHover: (hovering: boolean) => void;
+  registerRef?: (id: string, el: HTMLElement | null) => void;
 };
 
 // CANONICAL HH:MM rule: accept ^(\d{1,2}):(\d{2})$ where h ≤ 23 and m ≤ 59.
@@ -68,9 +73,14 @@ export function EventRow({
   places,
   canMoveUp,
   canMoveDown,
+  selected,
+  hovered,
   onMoveUp,
   onMoveDown,
   onRemove,
+  onSelect,
+  onHover,
+  registerRef,
 }: Props) {
   const router = useRouter();
   const isOptimistic = event.id.startsWith("opt-");
@@ -203,9 +213,15 @@ export function EventRow({
 
   return (
     <div
+      ref={(el) => registerRef?.(event.id, el)}
       role="row"
+      onClick={onSelect}
+      onMouseEnter={() => onHover(true)}
+      onMouseLeave={() => onHover(false)}
       className={cn(
-        "grid items-start gap-2 px-3 py-2",
+        "grid items-start gap-2 border-l-2 border-transparent px-3 py-2 transition-colors",
+        selected && "border-primary bg-primary/5",
+        hovered && !selected && "bg-muted/30",
         isOptimistic && "opacity-60",
       )}
       style={{

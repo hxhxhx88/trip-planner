@@ -1,7 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useOptimistic, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useOptimistic,
+  useRef,
+  useTransition,
+} from "react";
 import { toast } from "sonner";
 
 import { addEvent, moveEvent, removeEvent } from "@/actions/events";
@@ -16,6 +22,7 @@ import {
   type DayTravel,
 } from "@/lib/model/day";
 import type { PlanForEditor } from "@/lib/model/plan";
+import { useSelection } from "@/stores/selection";
 
 type Props = {
   planId: string;
@@ -172,6 +179,23 @@ export function TableView({
   );
   const [pending, startTransition] = useTransition();
 
+  const selectedId = useSelection((s) => s.selectedId);
+  const hoveredId = useSelection((s) => s.hoveredId);
+  const select = useSelection((s) => s.select);
+  const hover = useSelection((s) => s.hover);
+
+  const rowRefs = useRef(new Map<string, HTMLElement>());
+  const registerRef = useCallback((id: string, el: HTMLElement | null) => {
+    if (el) rowRefs.current.set(id, el);
+    else rowRefs.current.delete(id);
+  }, []);
+
+  useEffect(() => {
+    if (!selectedId) return;
+    const el = rowRefs.current.get(selectedId);
+    if (el) el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [selectedId]);
+
   const prevDayLodging = findPrevDayLodging(day, days);
 
   const eventCount = optimistic.filter((r) => r.kind === "event").length;
@@ -209,52 +233,87 @@ export function TableView({
     });
   };
 
+  const handleHoverCallback = useCallback(
+    (id: string) => (h: boolean) => hover(h ? id : null),
+    [hover],
+  );
+
   return (
     <div role="table" className="flex flex-col gap-1">
       {optimistic.map((row, i) => {
         if (row.kind === "lodging-start") {
+          const id = `lodging-start:${day.id}`;
           return (
             <LodgingRow
               key="lodging-start"
+              id={id}
               planId={planId}
               dayId={day.id}
               slot="start"
               placeId={row.data.placeId}
               places={places}
               prevDayLodgingPlaceId={prevDayLodging}
+              selected={selectedId === id}
+              hovered={hoveredId === id}
+              onSelect={() => select(id, "pane")}
+              onHover={handleHoverCallback(id)}
+              registerRef={registerRef}
             />
           );
         }
         if (row.kind === "lodging-end") {
+          const id = `lodging-end:${day.id}`;
           return (
             <LodgingRow
               key="lodging-end"
+              id={id}
               planId={planId}
               dayId={day.id}
               slot="end"
               placeId={row.data.placeId}
               places={places}
               prevDayLodgingPlaceId={prevDayLodging}
+              selected={selectedId === id}
+              hovered={hoveredId === id}
+              onSelect={() => select(id, "pane")}
+              onHover={handleHoverCallback(id)}
+              registerRef={registerRef}
             />
           );
         }
         if (row.kind === "travel") {
+          const id = row.data.id;
           return (
-            <TravelRow key={row.data.id} planId={planId} travel={row.data} />
+            <TravelRow
+              key={id}
+              planId={planId}
+              travel={row.data}
+              selected={selectedId === id}
+              hovered={hoveredId === id}
+              onSelect={() => select(id, "pane")}
+              onHover={handleHoverCallback(id)}
+              registerRef={registerRef}
+            />
           );
         }
         const eventOrdinal = eventIndices.indexOf(i);
+        const id = row.data.id;
         return (
           <EventRow
-            key={row.data.id}
+            key={id}
             planId={planId}
             event={row.data}
             places={places}
             canMoveUp={eventOrdinal > 0}
             canMoveDown={eventOrdinal < eventCount - 1}
-            onMoveUp={() => handleMove(row.data.id, "up")}
-            onMoveDown={() => handleMove(row.data.id, "down")}
-            onRemove={() => handleRemove(row.data.id)}
+            selected={selectedId === id}
+            hovered={hoveredId === id}
+            onMoveUp={() => handleMove(id, "up")}
+            onMoveDown={() => handleMove(id, "down")}
+            onRemove={() => handleRemove(id)}
+            onSelect={() => select(id, "pane")}
+            onHover={handleHoverCallback(id)}
+            registerRef={registerRef}
           />
         );
       })}

@@ -21,6 +21,11 @@ export function MapPane({ data }: Props) {
   const mapId = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID;
 
   const currentDayId = useSelection((s) => s.currentDayId);
+  const selectedId = useSelection((s) => s.selectedId);
+  const hoveredId = useSelection((s) => s.hoveredId);
+  const select = useSelection((s) => s.select);
+  const hover = useSelection((s) => s.hover);
+
   const days = data.days;
   const resolvedDayId =
     days.find((d) => d.id === currentDayId)?.id ?? days[0]?.id ?? null;
@@ -54,6 +59,7 @@ export function MapPane({ data }: Props) {
             defaultZoom={2}
             gestureHandling="greedy"
             disableDefaultUI={false}
+            onClick={() => select(null, "map")}
             style={{ width: "100%", height: "100%" }}
           >
             {mapDay.startLodging && (
@@ -63,6 +69,12 @@ export function MapPane({ data }: Props) {
                   lng: mapDay.startLodging.lng,
                 }}
                 name={mapDay.startLodging.name}
+                selected={selectedId === mapDay.startLodging.id}
+                hovered={hoveredId === mapDay.startLodging.id}
+                onClick={() => select(mapDay.startLodging!.id, "map")}
+                onHover={(h) =>
+                  hover(h ? mapDay.startLodging!.id : null)
+                }
               />
             )}
             {mapDay.endLodging && (
@@ -72,6 +84,10 @@ export function MapPane({ data }: Props) {
                   lng: mapDay.endLodging.lng,
                 }}
                 name={mapDay.endLodging.name}
+                selected={selectedId === mapDay.endLodging.id}
+                hovered={hoveredId === mapDay.endLodging.id}
+                onClick={() => select(mapDay.endLodging!.id, "map")}
+                onHover={(h) => hover(h ? mapDay.endLodging!.id : null)}
               />
             )}
             {mapDay.events.map((e) => (
@@ -80,6 +96,10 @@ export function MapPane({ data }: Props) {
                 position={{ lat: e.lat, lng: e.lng }}
                 name={e.name}
                 visitNumber={e.visitNumber}
+                selected={selectedId === e.id}
+                hovered={hoveredId === e.id}
+                onClick={() => select(e.id, "map")}
+                onHover={(h) => hover(h ? e.id : null)}
               />
             ))}
             {mapDay.travels.map((t) => (
@@ -87,9 +107,14 @@ export function MapPane({ data }: Props) {
                 key={t.id}
                 vehicle={t.vehicle}
                 routePath={t.routePath}
+                selected={selectedId === t.id}
+                hovered={hoveredId === t.id}
+                onClick={() => select(t.id, "map")}
+                onHover={(h) => hover(h ? t.id : null)}
               />
             ))}
             <FitBounds mapDay={mapDay} />
+            <PanToSelected mapDay={mapDay} />
           </Map>
         </div>
       ) : (
@@ -192,6 +217,47 @@ function FitBounds({ mapDay }: { mapDay: MapDay }) {
     }
     map.fitBounds(bounds, 32);
   }, [map, mapDay]);
+
+  return null;
+}
+
+function PanToSelected({ mapDay }: { mapDay: MapDay }) {
+  const map = useMap();
+  const selectedId = useSelection((s) => s.selectedId);
+  const selectSource = useSelection((s) => s.selectSource);
+
+  useEffect(() => {
+    if (!map || !selectedId) return;
+    if (selectSource === "map") return;
+
+    const minZoom = 15;
+    const pan = (lat: number, lng: number) => {
+      map.panTo({ lat, lng });
+      const z = map.getZoom();
+      if (typeof z === "number" && z < minZoom) map.setZoom(minZoom);
+      else if (typeof z !== "number") map.setZoom(minZoom);
+    };
+
+    if (mapDay.startLodging && mapDay.startLodging.id === selectedId) {
+      pan(mapDay.startLodging.lat, mapDay.startLodging.lng);
+      return;
+    }
+    if (mapDay.endLodging && mapDay.endLodging.id === selectedId) {
+      pan(mapDay.endLodging.lat, mapDay.endLodging.lng);
+      return;
+    }
+    const event = mapDay.events.find((e) => e.id === selectedId);
+    if (event) {
+      pan(event.lat, event.lng);
+      return;
+    }
+    const travel = mapDay.travels.find((t) => t.id === selectedId);
+    if (travel) {
+      const bounds = new google.maps.LatLngBounds();
+      for (const [lat, lng] of travel.routePath) bounds.extend({ lat, lng });
+      map.fitBounds(bounds, 48);
+    }
+  }, [map, selectedId, selectSource, mapDay]);
 
   return null;
 }

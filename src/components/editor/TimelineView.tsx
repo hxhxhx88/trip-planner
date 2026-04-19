@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { BedDouble } from "lucide-react";
 
 import { EventBlock } from "@/components/editor/timeline/EventBlock";
@@ -20,7 +20,7 @@ type Props = {
   travels: DayTravel[];
   places: PlanForEditor["places"];
   pxPerMin?: number;
-  onOpenInTable: (id: string) => void;
+  onSelect: (id: string) => void;
 };
 
 export function TimelineView({
@@ -29,7 +29,7 @@ export function TimelineView({
   travels,
   places,
   pxPerMin = 0.5,
-  onOpenInTable,
+  onSelect,
 }: Props) {
   const model = useMemo(
     () => toTimelineModel({ day, events, travels, places, pxPerMin }),
@@ -38,6 +38,18 @@ export function TimelineView({
 
   const selectedId = useSelection((s) => s.selectedId);
   const hover = useSelection((s) => s.hover);
+
+  const refsMap = useRef(new Map<string, HTMLElement>());
+  const registerRef = useCallback((id: string, el: HTMLElement | null) => {
+    if (el) refsMap.current.set(id, el);
+    else refsMap.current.delete(id);
+  }, []);
+
+  useEffect(() => {
+    if (!selectedId) return;
+    const el = refsMap.current.get(selectedId);
+    if (el) el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [selectedId]);
 
   const lodgingItems = model.items.filter(
     (i): i is Extract<TimelineItem, { kind: "lodging" }> => i.kind === "lodging",
@@ -48,10 +60,6 @@ export function TimelineView({
   const travelItems = model.items.filter(
     (i): i is Extract<TimelineItem, { kind: "travel" }> => i.kind === "travel",
   );
-
-  const handleHover = (id: string | null) => {
-    hover(id);
-  };
 
   return (
     <div>
@@ -73,8 +81,9 @@ export function TimelineView({
               key={item.id}
               item={item}
               selected={selectedId === item.id}
-              onClick={() => onOpenInTable(item.id)}
-              onHover={(h) => handleHover(h ? item.id : null)}
+              onClick={() => onSelect(item.id)}
+              onHover={(h) => hover(h ? item.id : null)}
+              registerRef={registerRef}
             />
           ))}
           {eventItems.map((item) => (
@@ -82,8 +91,9 @@ export function TimelineView({
               key={item.id}
               item={item}
               selected={selectedId === item.id}
-              onClick={() => onOpenInTable(item.id)}
-              onHover={(h) => handleHover(h ? item.id : null)}
+              onClick={() => onSelect(item.id)}
+              onHover={(h) => hover(h ? item.id : null)}
+              registerRef={registerRef}
             />
           ))}
         </div>
@@ -91,8 +101,9 @@ export function TimelineView({
       <UnscheduledPill
         items={model.unscheduled}
         selectedId={selectedId}
-        onSelect={onOpenInTable}
-        onHover={handleHover}
+        onSelect={onSelect}
+        onHover={hover}
+        registerRef={registerRef}
       />
     </div>
   );

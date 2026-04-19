@@ -26,9 +26,16 @@ type Props = {
   selectedId: string | null;
   onSelect: (id: string) => void;
   onHover: (id: string | null) => void;
+  registerRef?: (id: string, el: HTMLElement | null) => void;
 };
 
-export function UnscheduledPill({ items, selectedId, onSelect, onHover }: Props) {
+export function UnscheduledPill({
+  items,
+  selectedId,
+  onSelect,
+  onHover,
+  registerRef,
+}: Props) {
   if (items.length === 0) return null;
 
   return (
@@ -43,6 +50,7 @@ export function UnscheduledPill({ items, selectedId, onSelect, onHover }: Props)
             return (
               <li key={item.id}>
                 <button
+                  ref={(el) => registerRef?.(item.id, el)}
                   type="button"
                   onClick={() => onSelect(item.id)}
                   onMouseEnter={() => onHover(item.id)}
@@ -66,6 +74,7 @@ export function UnscheduledPill({ items, selectedId, onSelect, onHover }: Props)
           return (
             <li key={item.id}>
               <button
+                ref={(el) => registerRef?.(item.id, el)}
                 type="button"
                 onClick={() => onSelect(item.id)}
                 onMouseEnter={() => onHover(item.id)}

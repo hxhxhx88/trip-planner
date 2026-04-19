@@ -8,11 +8,19 @@ type Props = {
   selected: boolean;
   onClick: () => void;
   onHover: (hovering: boolean) => void;
+  registerRef?: (id: string, el: HTMLElement | null) => void;
 };
 
-export function EventBlock({ item, selected, onClick, onHover }: Props) {
+export function EventBlock({
+  item,
+  selected,
+  onClick,
+  onHover,
+  registerRef,
+}: Props) {
   return (
     <button
+      ref={(el) => registerRef?.(item.id, el)}
       type="button"
       onClick={onClick}
       onMouseEnter={() => onHover(true)}

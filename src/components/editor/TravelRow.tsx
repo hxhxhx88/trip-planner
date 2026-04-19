@@ -8,13 +8,27 @@ import { updateTravel } from "@/actions/travels";
 import { VehicleSelect } from "@/components/editor/VehicleSelect";
 import type { DayTravel } from "@/lib/model/day";
 import type { Vehicle } from "@/lib/schemas";
+import { cn } from "@/lib/utils";
 
 type Props = {
   planId: string;
   travel: DayTravel;
+  selected: boolean;
+  hovered: boolean;
+  onSelect: () => void;
+  onHover: (hovering: boolean) => void;
+  registerRef?: (id: string, el: HTMLElement | null) => void;
 };
 
-export function TravelRow({ planId, travel }: Props) {
+export function TravelRow({
+  planId,
+  travel,
+  selected,
+  hovered,
+  onSelect,
+  onHover,
+  registerRef,
+}: Props) {
   const router = useRouter();
   const [vehicle, setVehicle] = useState<Vehicle | null>(
     (travel.vehicle as Vehicle | null) ?? null,
@@ -46,8 +60,16 @@ export function TravelRow({ planId, travel }: Props) {
 
   return (
     <div
+      ref={(el) => registerRef?.(travel.id, el)}
       role="row"
-      className="grid items-center gap-2 border-l-2 border-muted px-3 py-1.5 text-xs text-muted-foreground"
+      onClick={onSelect}
+      onMouseEnter={() => onHover(true)}
+      onMouseLeave={() => onHover(false)}
+      className={cn(
+        "grid items-center gap-2 border-l-2 px-3 py-1.5 text-xs text-muted-foreground transition-colors",
+        selected ? "border-primary bg-primary/5" : "border-muted",
+        hovered && !selected && "bg-muted/30",
+      )}
       style={{ gridTemplateColumns: "140px 1fr 24px 72px" }}
     >
       <div role="cell">

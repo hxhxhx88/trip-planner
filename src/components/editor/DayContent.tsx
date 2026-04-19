@@ -31,9 +31,8 @@ export function DayContent({
     "table",
   );
 
-  const handleOpenInTable = (id: string) => {
-    useSelection.getState().select(id);
-    setView("table");
+  const handleSelect = (id: string) => {
+    useSelection.getState().select(id, "pane");
   };
 
   return (
@@ -63,7 +62,7 @@ export function DayContent({
           events={events}
           travels={travels}
           places={places}
-          onOpenInTable={handleOpenInTable}
+          onSelect={handleSelect}
         />
       )}
     </div>

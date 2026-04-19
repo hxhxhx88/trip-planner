@@ -92,10 +92,10 @@ Modify:
 - **Travel connector** — from previous Event's end to next Event's start. If both are known, the connector spans exactly that range. If only one is known, show a small "computing" chip; do not try to compute the other (that's Auto Fill's job).
 - **Empty space** — product §4.3 says a 30-min gap between `arrival_time` and next `start_time` is just blank. That's automatic from the math — the travel connector ends at `arrival`, the next event block starts later, and the space between is the empty axis.
 - **Selection** — `selectedId` from Zustand; the matching block/connector gets a ring (Tailwind `ring-2 ring-primary`). Selecting in Timeline also writes to the store (hook into click handler).
-- **Click to edit** — v1 Timeline is primarily read-only (pacing view). Clicking a block switches back to Table and focuses that row. Double-click reserved for future inline edit.
+- **Click to edit** — v1 Timeline is primarily read-only (pacing view). **Initial behavior (landed here):** clicking a block wrote the selection to Zustand and flipped the view to Table. **Superseded in `0009`:** the view flip is dropped; a Timeline click now just writes the selection, and the `ViewToggle` is the only thing that switches Table ↔ Timeline. Rationale: once the Map pans to the selected entity, yanking the user out of Timeline on every click defeats the point of inspecting pacing on the map. Double-click reserved for future inline edit.
 - **ViewToggle state** — `useLocalStorage(`editor:view:${planId}`, 'table')` — per-plan key. Default `table`.
 - **Empty days** — no events → Timeline shows only the two lodging markers (or placeholders) and an axis; no empty-state overlay.
-- **Click-to-table persistence** — clicking a block also writes `'table'` to localStorage via the same hook, so the Table state sticks until the user explicitly flips back to Timeline. `0009` revisits this if it harms the map-sync-on-Timeline flow.
+- **Click-to-table persistence** — this 0008 behavior (click writes `'table'` to localStorage as well) was **removed by `0009`**: Timeline clicks no longer touch the view; `useLocalStorage(\`editor:view:${planId}\`)` is updated only through `ViewToggle`. Selection state still crosses the Table↔Timeline boundary via Zustand regardless.
 
 ## Verification
 

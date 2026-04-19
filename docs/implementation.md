@@ -117,7 +117,8 @@ src/
       map.ts                         # pure toMapDay(plan, dayId) → MapDay | null (0007)
       timeline.ts                    # pure toTimelineModel({day, events, travels, places, pxPerMin}) → TimelineModel (0008)
   stores/
-    selection.ts                     # zustand store: { selectedId, hoveredId, currentDayId }
+    selection.ts                     # zustand store: { currentDayId, selectedId, selectSource, hoveredId };
+                                     #   select(id, source?) · hover(id) debounced 50ms · setCurrentDay clears selection
   actions/                           # 'use server' mutation actions grouped by entity
     plans.ts                         # createPlan, renamePlan, setPlanTimezone, duplicatePlan, deletePlan
     days.ts                          # addDay, deleteDay, setDayLodging, inheritDayLodging
@@ -133,7 +134,7 @@ drizzle.config.ts
 - **Reads** — Server Components call helpers in `lib/model/plan.ts`, wrapped in `'use cache'` with `cacheTag('plan:${planId}')` (and finer tags like `plan:${planId}:day:${dayId}` where useful). All cache-relevant inputs are passed as arguments (never read from closure) so Cache Components can key correctly. No `cookies()`/`headers()` inside cached functions (we have no auth).
 - **Mutations** — Server Actions in `src/actions/` mutate via Drizzle, call `updateTag('plan:${planId}')`, and either return a result or rely on the router to revalidate. Field-level edits use local controlled state + debounced action; row-level add/remove/reorder uses `useOptimistic` for snap.
 - **Google APIs** — Route handlers in `app/api/` (not actions, so they can use `revalidateTag('places', 'max')` when cache refresh is required). Responses persist in `places_cache` and `directions_cache` Drizzle tables. Photos are downloaded once to `public/places/{placeId}/{idx}.jpg`; subsequent reads are pure static.
-- **Interactive UI state** — Zustand holds `{ selectedId, hoveredId, currentDayId }`. Both Map and right pane subscribe; selection persists across Table↔Timeline toggles. No server round-trip for selection.
+- **Interactive UI state** — Zustand holds `{ currentDayId, selectedId, selectSource, hoveredId }`. `selectSource: 'map' | 'pane' | null` records which side originated the current selection so the Map can skip auto-panning when the click came from itself (established in `0009`). The `hover` setter is debounced 50 ms inside the store so every caller shares the same latency. Both Map and right pane subscribe; selection persists across Table↔Timeline toggles. No server round-trip for selection.
 
 ### Next 16 specifics we honor
 

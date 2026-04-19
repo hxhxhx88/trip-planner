@@ -21,9 +21,16 @@ type Props = {
   selected: boolean;
   onClick: () => void;
   onHover: (hovering: boolean) => void;
+  registerRef?: (id: string, el: HTMLElement | null) => void;
 };
 
-export function TravelConnector({ item, selected, onClick, onHover }: Props) {
+export function TravelConnector({
+  item,
+  selected,
+  onClick,
+  onHover,
+  registerRef,
+}: Props) {
   const Icon = item.vehicle ? VEHICLE_ICON[item.vehicle] : null;
   const hasTime = item.travelTime != null;
   const label = hasTime ? `${item.travelTime} min` : "travel time TBD";
@@ -44,6 +51,7 @@ export function TravelConnector({ item, selected, onClick, onHover }: Props) {
         />
       ) : null}
       <button
+        ref={(el) => registerRef?.(item.id, el)}
         type="button"
         onClick={onClick}
         onMouseEnter={() => onHover(true)}

@@ -34,7 +34,7 @@ Product §§5.2 (Day & Lodging), 5.8 (views).
 
 No new tables. Uses `days`.
 
-Zustand selection store (`src/stores/selection.ts`):
+Zustand selection store (`src/stores/selection.ts`). The **initial** shape landed here is:
 ```ts
 type SelectionState = {
   currentDayId: string | null;
@@ -45,6 +45,8 @@ type SelectionState = {
   hover: (id: string | null) => void;
 };
 ```
+
+`0009` extends this store with a `selectSource: 'map' | 'pane' | null` field (so pan-to-selected can skip map-originated selections) and moves the `hover` 50 ms debounce into the setter. `select` gains an optional `source` arg defaulting to `'pane'`. See `0009-map-sync.md` for the rationale.
 
 Initialized once per plan; `currentDayId` defaults to the first day's id (computed in the server component and passed as prop to a client `SelectionHydrator`).
 
