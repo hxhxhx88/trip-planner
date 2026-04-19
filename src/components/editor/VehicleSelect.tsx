@@ -1,7 +1,5 @@
 "use client";
 
-import { Bike, Bus, Car, Footprints } from "lucide-react";
-
 import {
   Select,
   SelectContent,
@@ -10,25 +8,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { VEHICLES, type Vehicle } from "@/lib/schemas";
+import { VEHICLE_ICON, VEHICLE_LABEL } from "@/lib/vehicles";
 
 type Props = {
   value: Vehicle | null;
   onChange: (next: Vehicle | null) => void;
   disabled?: boolean;
-};
-
-const LABEL: Record<Vehicle, string> = {
-  walk: "Walk",
-  drive: "Drive",
-  transit: "Transit",
-  cycle: "Cycle",
-};
-
-const ICON: Record<Vehicle, React.ComponentType<{ className?: string }>> = {
-  walk: Footprints,
-  drive: Car,
-  transit: Bus,
-  cycle: Bike,
 };
 
 export function VehicleSelect({ value, onChange, disabled }: Props) {
@@ -43,11 +28,11 @@ export function VehicleSelect({ value, onChange, disabled }: Props) {
       </SelectTrigger>
       <SelectContent>
         {VEHICLES.map((v) => {
-          const Icon = ICON[v];
+          const Icon = VEHICLE_ICON[v];
           return (
             <SelectItem key={v} value={v}>
               <Icon className="size-3.5" />
-              {LABEL[v]}
+              {VEHICLE_LABEL[v]}
             </SelectItem>
           );
         })}

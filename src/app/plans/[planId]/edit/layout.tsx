@@ -3,6 +3,7 @@ import { Suspense, type ReactNode } from "react";
 import { ArrowLeftIcon, SettingsIcon } from "lucide-react";
 
 import { AutoFillButton } from "@/components/editor/AutoFillButton";
+import { ReleaseBanner } from "@/components/editor/ReleaseBanner";
 import { Button } from "@/components/ui/button";
 import { getPlan } from "@/lib/model/plans";
 
@@ -56,9 +57,10 @@ async function Topbar({
           </Button>
         </Link>
         <AutoFillButton planId={planId} isDirty={plan?.dirtySince != null} />
-        <Button size="sm" disabled title="Available after 0013">
-          Release
-        </Button>
+        <ReleaseBanner
+          planId={planId}
+          releasedSlug={plan?.releasedSlug ?? null}
+        />
       </div>
     </header>
   );

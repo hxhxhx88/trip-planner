@@ -62,7 +62,9 @@ src/
         edit/page.tsx                # split-pane editor (server wrapper)
         settings/page.tsx            # rename, tz, duplicate, delete
         pdf/route.ts                 # streaming PDF route handler
-    p/[slug]/page.tsx                # released, mobile-first, read-only
+    p/[slug]/page.tsx                # released, mobile-first, read-only (0013)
+    p/[slug]/layout.tsx              # mobile container + generateMetadata (0013)
+    p/[slug]/not-found.tsx           # friendly 404 for unreleased / deleted (0013)
     api/
       places/
         autocomplete/route.ts
@@ -84,6 +86,9 @@ src/
     places/                          # PlacePicker, PlacePreview, HoursEditor
     plans/                           # PlansList, NewPlanDialog, PlanRowActions, StatusBadge, TimeAgo
     alerts/                          # AlertPanel, InlineMarker (0010)
+    released/                        # ReleasedView, ReleasedDay, ReleasedEventCard,
+                                     # ReleasedTravelConnector, ReleasedLodgingCard,
+                                     # ReleasedFreeTime, ReleasedAlerts (0013)
     pdf/                             # Cover, Overview, PerDay, DetailCard (react-pdf, 0014)
   db/
     index.ts                         # drizzle client
@@ -113,6 +118,8 @@ src/
     plans/
       markDirty.ts                   # markPlanDirty(planId) — single UPDATE on plans.dirty_since (0012)
     slug.ts                          # nanoid wrapper (16-char URL-safe)
+    vehicles.ts                      # VEHICLE_LABEL + VEHICLE_ICON maps shared by
+                                     # VehicleSelect and ReleasedTravelConnector (0013)
     schemas.ts                       # shared Zod schemas + PlaceHours / Vehicle / Alert types
     actions.ts                       # Result<T>, ActionError, ok/err/zodErr — server-action return convention
     utils.ts                         # shadcn cn() (clsx + tailwind-merge)
@@ -124,6 +131,7 @@ src/
       map.ts                         # pure toMapDay(plan, dayId) → MapDay | null (0007)
       timeline.ts                    # pure toTimelineModel({day, events, travels, places, pxPerMin}) → TimelineModel (0008)
       alerts.ts                      # cached getAlertsForPlan(planId) — wraps getPlanForEditor + validate (0010)
+      released.ts                    # cached getPlanIdBySlug(slug) + getPlanForReleased(planId) wrapper (0013)
   stores/
     selection.ts                     # zustand store: { currentDayId, selectedId, selectSource, hoveredId };
                                      #   select(id, source?) · hover(id) debounced 50ms · setCurrentDay clears selection
@@ -134,6 +142,7 @@ src/
     travels.ts                       # updateTravel (0006)
     places.ts                        # setHoursOverride, clearHoursOverride (0005)
     autofill.ts                      # runAutoFill(planId) — runs engine, clears dirtySince, updateTag (0012)
+    release.ts                       # releasePlan, unreleasePlan — unique-slug retry + tag invalidation (0013)
 next.config.ts                       # cacheComponents, serverExternalPackages, image remotePatterns
 drizzle.config.ts
 ```
@@ -153,7 +162,7 @@ drizzle.config.ts
 - `@react-pdf/renderer` added to `serverExternalPackages`.
 - `unstable_instant = { prefetch: 'static' }` exported from `/` and `/plans/[planId]/edit` after the full data shape settles (audited in `0016`).
 - `useOptimistic` **only** for row-level adds/removes/reorders — never per-field edits (which would require a full reducer across 6+ column mutation shapes).
-- **Current-time rendering must be client-side.** Under `cacheComponents: true`, calling `Date.now()` (or anything that uses it, like `formatDistanceToNow`) in a Server Component throws unless request-time data has been read first. Any "X minutes ago" / "released today" / footer-timestamp UI must live in a `'use client'` leaf. Established by the `TimeAgo` component in `0003`; reapply for the released page (`0013`) and any future now-relative label.
+- **Current-time rendering must be client-side.** Under `cacheComponents: true`, calling `Date.now()` (or anything that uses it, like `formatDistanceToNow`) in a Server Component throws unless request-time data has been read first. Any "X minutes ago" / "released today" / footer-timestamp UI must live in a `'use client'` leaf. Established by the `TimeAgo` component in `0003`; `0013`'s released page intentionally renders no now-relative label, so nothing to reapply there in v1. Apply the pattern if any such label is added later (release footer, PDF cover, etc.).
 
 ---
 
@@ -196,7 +205,7 @@ Notes:
 | 10 | `0010-validation-alerts.md` | Pure `validate(plan)` → `Alert[]`; all Issue + Warning rules; AlertPanel + inline markers; day-date-overlap rule. Defines Alert shape for Auto Fill. | 0006 |
 | 11 | `0011-autofill-engine.md` | (a) Backfill: Places metadata + Directions via shared cache-aware helpers (`getOrFetchPlaceDetails`, `getOrComputeDirections`); directions rounded up to next 15 min. (b) Cascade reducer: pure forward + backward + merge, respects `lockedFields`, fills empty descriptions from Google's `category`. Engine returns `{ alerts }`; caller owns `updateTag`. Also splits `getPlanForEditor` into cached/uncached pair and exports `dedupeAlerts`. | 0002, 0010 |
 | 12 | `0012-autofill-action.md` | Server action orchestrates 0011 and persists results; "Auto Fill" button in editor header; dirty-state indicator after any edit. | 0011 |
-| 13 | `0013-release-sharing.md` | Release/Unrelease actions; `/p/[slug]` mobile-first read-only route; live state from DB; all alerts shown; PDF download link. | 0003, 0010 |
+| 13 | `0013-release-sharing.md` | Release/Unrelease actions + `ReleaseBanner`; `/p/[slug]` mobile-first read-only route; live state from DB via `release:${slug}` tag + existing `plan:${planId}` tag; all alerts shown (grouped per-Day Heads-up + inline dots). PDF download link wired in `0015`. | 0003, 0010 |
 | 14 | `0014-pdf-tree.md` | React-PDF component tree with fixtures: Cover, Overview, PerDay (Timeline + StaticMap + DetailCards), Footer with alert summary. Runnable from a local script for iteration. | 0005 |
 | 15 | `0015-pdf-route.md` | `/plans/[planId]/pdf/route.ts` streaming handler; Static Maps URL builder; font registration; `serverExternalPackages`. Hooked from editor + released page. | 0014, 0013 |
 | 16 | `0016-polish-verification.md` | `unstable_instant` audit; error boundaries; loading states; image optimization; walk-through of product.md §9 scenarios. | all |
