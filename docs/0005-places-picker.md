@@ -55,19 +55,19 @@ export type EffectiveHours = {
 ## Files
 
 Create:
-- `/Users/xuhan/code/travel-tw/src/components/places/PlacePicker.tsx`
-- `/Users/xuhan/code/travel-tw/src/components/places/PlacePreview.tsx`
-- `/Users/xuhan/code/travel-tw/src/components/places/HoursEditor.tsx`
-- `/Users/xuhan/code/travel-tw/src/lib/model/places.ts` — `getEffectiveHours(planId, placeId)`; merges `plan_place_overrides` over `places.hours`.
-- `/Users/xuhan/code/travel-tw/src/actions/places.ts` — `setHoursOverride`, `clearHoursOverride`, `ensurePhoto(placeId, idx)` (server-only helper; not a UI action).
-- `/Users/xuhan/code/travel-tw/src/lib/geo/inferTz.ts` — wraps `geo-tz`.
+- `src/components/places/PlacePicker.tsx`
+- `src/components/places/PlacePreview.tsx`
+- `src/components/places/HoursEditor.tsx`
+- `src/lib/model/places.ts` — `getEffectiveHours(planId, placeId)`; merges `plan_place_overrides` over `places.hours`.
+- `src/actions/places.ts` — `setHoursOverride`, `clearHoursOverride`, `ensurePhoto(placeId, idx)` (server-only helper; not a UI action).
+- `src/lib/geo/inferTz.ts` — wraps `geo-tz`.
 
 Modify:
-- `/Users/xuhan/code/travel-tw/src/db/schema.ts` — add `tzSetByUser` to `plans`.
-- `/Users/xuhan/code/travel-tw/src/actions/plans.ts` — `setPlanTimezone` sets `tzSetByUser = true`.
-- `/Users/xuhan/code/travel-tw/src/actions/days.ts` — `setDayLodging` (start|end) calls `inferTimezoneIfUnset` after successful upsert.
-- `/Users/xuhan/code/travel-tw/src/components/editor/LodgingSlot.tsx` — wire `PlacePicker` in, add "Inherit from prev day" button.
-- `/Users/xuhan/code/travel-tw/package.json` — add `geo-tz` dep.
+- `src/db/schema.ts` — add `tzSetByUser` to `plans`.
+- `src/actions/plans.ts` — `setPlanTimezone` sets `tzSetByUser = true`.
+- `src/actions/days.ts` — `setDayLodging` (start|end) calls `inferTimezoneIfUnset` after successful upsert.
+- `src/components/editor/LodgingSlot.tsx` — wire `PlacePicker` in, add "Inherit from prev day" button.
+- `package.json` — add `geo-tz` dep.
 
 ## Implementation notes
 

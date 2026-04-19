@@ -68,17 +68,17 @@ export type Alert = z.infer<typeof AlertSchema>;
 ## Files
 
 Create:
-- `/Users/xuhan/code/travel-tw/src/lib/validate.ts` — pure rules.
-- `/Users/xuhan/code/travel-tw/src/lib/validate.test.ts` — leave empty; noted here so future unit tests have a natural home.
-- `/Users/xuhan/code/travel-tw/src/components/alerts/AlertPanel.tsx`
-- `/Users/xuhan/code/travel-tw/src/components/alerts/InlineMarker.tsx`
-- `/Users/xuhan/code/travel-tw/src/lib/model/alerts.ts` — `getAlertsForPlan(planId)`: cached; rebuilds on `updateTag('plan:${planId}')`.
+- `src/lib/validate.ts` — pure rules.
+- `src/lib/validate.test.ts` — leave empty; noted here so future unit tests have a natural home.
+- `src/components/alerts/AlertPanel.tsx`
+- `src/components/alerts/InlineMarker.tsx`
+- `src/lib/model/alerts.ts` — `getAlertsForPlan(planId)`: cached; rebuilds on `updateTag('plan:${planId}')`.
 
 Modify:
-- `/Users/xuhan/code/travel-tw/src/components/editor/EventRow.tsx` — render `InlineMarker` in the Alert cell.
-- `/Users/xuhan/code/travel-tw/src/components/editor/TravelRow.tsx` — same.
-- `/Users/xuhan/code/travel-tw/src/components/editor/EditorShell.tsx` — mount `AlertPanel` as a collapsible drawer.
-- `/Users/xuhan/code/travel-tw/src/components/editor/timeline/EventBlock.tsx` — inline marker.
+- `src/components/editor/EventRow.tsx` — render `InlineMarker` in the Alert cell.
+- `src/components/editor/TravelRow.tsx` — same.
+- `src/components/editor/EditorShell.tsx` — mount `AlertPanel` as a collapsible drawer.
+- `src/components/editor/timeline/EventBlock.tsx` — inline marker.
 
 ## Implementation notes
 

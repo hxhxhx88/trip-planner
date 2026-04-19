@@ -38,19 +38,19 @@ No new tables. Uses `plans.releasedSlug` (already exists).
 ## Files
 
 Create:
-- `/Users/xuhan/code/travel-tw/src/actions/release.ts`
-- `/Users/xuhan/code/travel-tw/src/app/p/[slug]/page.tsx`
-- `/Users/xuhan/code/travel-tw/src/app/p/[slug]/layout.tsx` — mobile-tuned container + metadata.
-- `/Users/xuhan/code/travel-tw/src/components/released/ReleasedDay.tsx`
-- `/Users/xuhan/code/travel-tw/src/components/released/ReleasedEventCard.tsx`
-- `/Users/xuhan/code/travel-tw/src/components/released/ReleasedTravelConnector.tsx`
-- `/Users/xuhan/code/travel-tw/src/components/released/ReleasedLodgingCard.tsx`
-- `/Users/xuhan/code/travel-tw/src/components/released/ReleasedAlerts.tsx`
-- `/Users/xuhan/code/travel-tw/src/components/editor/ReleaseBanner.tsx`
-- `/Users/xuhan/code/travel-tw/src/lib/model/released.ts` — `getPlanBySlug(slug)`: cached with `cacheTag('release:${slug}')` AND `cacheTag('plan:${planId}')` so edits to the plan (which already call `updateTag('plan:${planId}')`) invalidate the released view automatically.
+- `src/actions/release.ts`
+- `src/app/p/[slug]/page.tsx`
+- `src/app/p/[slug]/layout.tsx` — mobile-tuned container + metadata.
+- `src/components/released/ReleasedDay.tsx`
+- `src/components/released/ReleasedEventCard.tsx`
+- `src/components/released/ReleasedTravelConnector.tsx`
+- `src/components/released/ReleasedLodgingCard.tsx`
+- `src/components/released/ReleasedAlerts.tsx`
+- `src/components/editor/ReleaseBanner.tsx`
+- `src/lib/model/released.ts` — `getPlanBySlug(slug)`: cached with `cacheTag('release:${slug}')` AND `cacheTag('plan:${planId}')` so edits to the plan (which already call `updateTag('plan:${planId}')`) invalidate the released view automatically.
 
 Modify:
-- `/Users/xuhan/code/travel-tw/src/components/editor/EditorShell.tsx` — mount `ReleaseBanner`.
+- `src/components/editor/EditorShell.tsx` — mount `ReleaseBanner`.
 
 ## Implementation notes
 

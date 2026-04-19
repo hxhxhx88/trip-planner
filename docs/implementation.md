@@ -8,7 +8,7 @@
 
 Build a single-user, human-in-the-loop travel itinerary planner as described in `docs/product.md`. The human provides intent (places, ordering, anchor times); the machine fills derivable data (Google Places metadata, travel time via Directions, cascaded clock times), validates (hours, conflicts, gaps), renders on an always-on map alongside an editable Table or Timeline, and exports a polished PDF. Released plans live at unlisted URLs and are mobile-first.
 
-Scaffold: Next.js 16.2.4 + React 19 + Tailwind 4 + TypeScript strict at `/Users/xuhan/code/travel-tw/`. No domain code yet.
+Scaffold: Next.js 16.2.4 + React 19 + Tailwind 4 + TypeScript strict at ``. No domain code yet.
 
 **Important:** This is NOT the Next.js you know from training data. Before writing any code, consult `node_modules/next/dist/docs/` for the version-matched API. The v16 specifics that shape this implementation:
 - **Cache Components** enabled (`cacheComponents: true`) — reads use `'use cache'` + `cacheTag`; mutations invalidate with `updateTag`.
@@ -26,7 +26,7 @@ Scaffold: Next.js 16.2.4 + React 19 + Tailwind 4 + TypeScript strict at `/Users/
 | Persistence | **Postgres** via `DATABASE_URL` | Portable; supports unlisted-URL feature; works local or hosted (Neon/Supabase/local). |
 | ORM | **Drizzle** + `drizzle-kit` | TypeScript-first, no codegen round-trip, readable SQL. |
 | Auth | **None** | Spec lists multi-user as non-goal; host is trusted. |
-| UI | **shadcn/ui** (Radix + Tailwind 4 + CVA + lucide-react) | Own-your-code primitives for a dense editor surface. |
+| UI | **shadcn/ui** (Base UI + Tailwind 4 + CVA + lucide-react) | Own-your-code primitives for a dense editor surface. Default `style: 'base-nova'`, `baseColor: 'neutral'`, OKLCH tokens. |
 | Interactive map | **`@vis.gl/react-google-maps`** | Modern, maintained Google React wrapper. |
 | Static map (PDF) | **Google Static Maps API** | Single image; self-contained PDF. |
 | PDF | **`@react-pdf/renderer`** | Server-side React → PDF via stream. |
@@ -81,14 +81,16 @@ src/
     schema.ts                        # tables (see §4)
     migrations/                      # drizzle-kit output
   lib/
-    time.ts                          # 15-min rounding, TZ helpers
+    time.ts                          # 15-min rounding, TZ helpers, HH:MM ↔ HH:MM:SS bridge
     cascade.ts                       # pure forward/backward/merge reducer
     validate.ts                      # pure alert rules
     google/
       places.ts                      # server-side HTTP calls
       directions.ts
       staticMap.ts                   # URL builder
-    slug.ts                          # nanoid wrapper
+    slug.ts                          # nanoid wrapper (16-char URL-safe)
+    schemas.ts                       # shared Zod schemas + PlaceHours / Vehicle / Alert types
+    utils.ts                         # shadcn cn() (clsx + tailwind-merge)
     model/
       plan.ts                        # read-side composition (plan + days + events + travels resolved)
   stores/

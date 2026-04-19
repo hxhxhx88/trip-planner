@@ -38,16 +38,16 @@ Input Zod schemas (in `src/actions/plans.ts`):
 ## Files
 
 Create:
-- `/Users/xuhan/code/travel-tw/src/actions/plans.ts`
-- `/Users/xuhan/code/travel-tw/src/lib/model/plans.ts` — `listPlans()`, `getPlan(id)`, wrapped in `'use cache'` with appropriate tags.
-- `/Users/xuhan/code/travel-tw/src/components/plans/PlansList.tsx`
-- `/Users/xuhan/code/travel-tw/src/components/plans/NewPlanDialog.tsx`
-- `/Users/xuhan/code/travel-tw/src/components/plans/PlanRowActions.tsx`
-- `/Users/xuhan/code/travel-tw/src/app/plans/new/page.tsx` — route that just mounts `NewPlanDialog` (separate URL so we can link to it).
-- `/Users/xuhan/code/travel-tw/src/app/plans/[planId]/settings/page.tsx`
+- `src/actions/plans.ts`
+- `src/lib/model/plans.ts` — `listPlans()`, `getPlan(id)`, wrapped in `'use cache'` with appropriate tags.
+- `src/components/plans/PlansList.tsx`
+- `src/components/plans/NewPlanDialog.tsx`
+- `src/components/plans/PlanRowActions.tsx`
+- `src/app/plans/new/page.tsx` — route that just mounts `NewPlanDialog` (separate URL so we can link to it).
+- `src/app/plans/[planId]/settings/page.tsx`
 
 Modify:
-- `/Users/xuhan/code/travel-tw/src/app/page.tsx` — render `PlansList`.
+- `src/app/page.tsx` — render `PlansList`.
 
 ## Implementation notes
 

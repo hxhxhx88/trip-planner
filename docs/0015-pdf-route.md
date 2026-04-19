@@ -36,14 +36,14 @@ export async function buildBrochureData(planId: string): Promise<BrochureData>;
 ## Files
 
 Create:
-- `/Users/xuhan/code/travel-tw/src/app/plans/[planId]/pdf/route.ts`
-- `/Users/xuhan/code/travel-tw/src/lib/pdf/data.ts`
+- `src/app/plans/[planId]/pdf/route.ts`
+- `src/lib/pdf/data.ts`
 
 Modify:
-- `/Users/xuhan/code/travel-tw/src/lib/google/staticMap.ts` — implement (stub exists from `0002`).
-- `/Users/xuhan/code/travel-tw/next.config.ts` — confirm `serverExternalPackages: ['@react-pdf/renderer']` is present (from `0001`).
-- `/Users/xuhan/code/travel-tw/src/components/editor/EditorShell.tsx` — add Download PDF button.
-- `/Users/xuhan/code/travel-tw/src/components/released/ReleasedDay.tsx` (or a new header component) — add Download PDF button.
+- `src/lib/google/staticMap.ts` — implement (stub exists from `0002`).
+- `next.config.ts` — confirm `serverExternalPackages: ['@react-pdf/renderer']` is present (from `0001`).
+- `src/components/editor/EditorShell.tsx` — add Download PDF button.
+- `src/components/released/ReleasedDay.tsx` (or a new header component) — add Download PDF button.
 
 ## Implementation notes
 

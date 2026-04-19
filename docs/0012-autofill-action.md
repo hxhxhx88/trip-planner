@@ -51,14 +51,14 @@ RunAutoFillResult = {
 ## Files
 
 Create:
-- `/Users/xuhan/code/travel-tw/src/actions/autofill.ts`
-- `/Users/xuhan/code/travel-tw/src/components/editor/AutoFillButton.tsx`
+- `src/actions/autofill.ts`
+- `src/components/editor/AutoFillButton.tsx`
 
 Modify:
-- `/Users/xuhan/code/travel-tw/src/db/schema.ts` — add `dirtySince`.
-- `/Users/xuhan/code/travel-tw/src/actions/events.ts`, `travels.ts`, `days.ts`, `places.ts` — every mutation sets `dirtySince = now()` on the owning plan.
-- `/Users/xuhan/code/travel-tw/src/components/editor/EditorShell.tsx` — mount `AutoFillButton` in the top bar; pass `isDirty` from server prop.
-- `/Users/xuhan/code/travel-tw/src/lib/model/plans.ts` — include `dirtySince` in `getPlan(id)`.
+- `src/db/schema.ts` — add `dirtySince`.
+- `src/actions/events.ts`, `travels.ts`, `days.ts`, `places.ts` — every mutation sets `dirtySince = now()` on the owning plan.
+- `src/components/editor/EditorShell.tsx` — mount `AutoFillButton` in the top bar; pass `isDirty` from server prop.
+- `src/lib/model/plans.ts` — include `dirtySince` in `getPlan(id)`.
 
 ## Implementation notes
 

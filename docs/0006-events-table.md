@@ -50,19 +50,19 @@ Where:
 ## Files
 
 Create:
-- `/Users/xuhan/code/travel-tw/src/actions/events.ts`
-- `/Users/xuhan/code/travel-tw/src/actions/travels.ts`
-- `/Users/xuhan/code/travel-tw/src/components/editor/TableView.tsx`
-- `/Users/xuhan/code/travel-tw/src/components/editor/EventRow.tsx`
-- `/Users/xuhan/code/travel-tw/src/components/editor/TravelRow.tsx`
-- `/Users/xuhan/code/travel-tw/src/components/editor/LodgingRow.tsx`
-- `/Users/xuhan/code/travel-tw/src/components/editor/VehicleSelect.tsx`
-- `/Users/xuhan/code/travel-tw/src/components/editor/AddEventButton.tsx`
-- `/Users/xuhan/code/travel-tw/src/lib/model/day.ts` — `getDayComposition(dayId)` returning interleaved rows as a single array.
+- `src/actions/events.ts`
+- `src/actions/travels.ts`
+- `src/components/editor/TableView.tsx`
+- `src/components/editor/EventRow.tsx`
+- `src/components/editor/TravelRow.tsx`
+- `src/components/editor/LodgingRow.tsx`
+- `src/components/editor/VehicleSelect.tsx`
+- `src/components/editor/AddEventButton.tsx`
+- `src/lib/model/day.ts` — `getDayComposition(dayId)` returning interleaved rows as a single array.
 
 Modify:
-- `/Users/xuhan/code/travel-tw/src/components/editor/EditorShell.tsx` — mount `TableView` in the right pane for the current Day.
-- `/Users/xuhan/code/travel-tw/src/lib/model/plan.ts` — ensure `getPlanForEditor` includes events and travels.
+- `src/components/editor/EditorShell.tsx` — mount `TableView` in the right pane for the current Day.
+- `src/lib/model/plan.ts` — ensure `getPlanForEditor` includes events and travels.
 
 ## Implementation notes
 
@@ -70,7 +70,7 @@ Modify:
 - **Travel invariant** — for N events, there are N+1 travels per day (including from start-lodging and to end-lodging). `addEvent` creates the new event and, if needed, splits the existing travel that "bridged" its slot into two travels. `removeEvent` reverses — the two adjacent travels merge into one (we keep the earlier one, drop the later; user picks vehicle again if they mismatch).
 - **`useOptimistic` scope** — `TableView` wraps the list of rows in a reducer that handles `add`, `remove`, `move`. Field edits are NOT optimistic; they use local controlled state per field and let the server response (via `updateTag` + `refresh`) be the reconciler.
 - **Debouncing** — each field has a `useDebouncedCallback(action, 300)` that fires after idle. On submit Enter: flush immediately.
-- **15-min rounding** — on blur, `roundToQuarter(parseToMinutes(value))` and re-render. Invalid input (e.g. 25:00) rolls back to last committed value.
+- **15-min rounding** — on blur, `roundToQuarter(hhmmToMinutes(value))` and re-render (helpers from `src/lib/time.ts`). Invalid input (e.g. 25:00) rolls back to last committed value.
 - **Locked fields** — server action accepts a patch; for each field in the patch, add its name to `lockedFields` (dedupe). Never remove from `lockedFields` unless the field is explicitly cleared (value → null) *and* user is confirming via a small "Unlock" action (v1 keeps it simple: clearing a value keeps it locked with null; Auto Fill still won't overwrite). This is consistent with §8 resolution: "user typed a value = lock".
 - **Concurrent-edit `router.refresh`** — the action returns `{ updatedAt }`; the client compares to the `updatedAt` it knew before sending. If newer than expected (some other tab wrote between your fetch and your mutation), we call `router.refresh()` so the UI re-pulls, and show a subtle toast ("Merged changes from another tab").
 - **Move up/down** — swap positions of adjacent (event, event); the travels between them don't need to move — they just find new adjacent events via position ordering. Simpler than a full reorder algorithm.

@@ -62,19 +62,19 @@ export type DirectionsResult = {
 ## Files
 
 Create:
-- `/Users/xuhan/code/travel-tw/src/lib/google/places.ts`
-- `/Users/xuhan/code/travel-tw/src/lib/google/directions.ts`
-- `/Users/xuhan/code/travel-tw/src/lib/google/staticMap.ts`
-- `/Users/xuhan/code/travel-tw/src/lib/google/types.ts`
-- `/Users/xuhan/code/travel-tw/src/lib/google/invalidate.ts`
-- `/Users/xuhan/code/travel-tw/src/app/api/places/autocomplete/route.ts`
-- `/Users/xuhan/code/travel-tw/src/app/api/places/details/route.ts`
-- `/Users/xuhan/code/travel-tw/src/app/api/places/photo/[placeId]/[idx]/route.ts`
-- `/Users/xuhan/code/travel-tw/src/app/api/directions/route.ts`
-- `/Users/xuhan/code/travel-tw/public/places/.gitkeep`
+- `src/lib/google/places.ts`
+- `src/lib/google/directions.ts`
+- `src/lib/google/staticMap.ts`
+- `src/lib/google/types.ts`
+- `src/lib/google/invalidate.ts`
+- `src/app/api/places/autocomplete/route.ts`
+- `src/app/api/places/details/route.ts`
+- `src/app/api/places/photo/[placeId]/[idx]/route.ts`
+- `src/app/api/directions/route.ts`
+- `public/places/.gitkeep`
 
 Modify:
-- `/Users/xuhan/code/travel-tw/.gitignore` — ignore `public/places/*` except `.gitkeep`.
+- `.gitignore` — ignore `public/places/*` except `.gitkeep`.
 
 ## Implementation notes
 

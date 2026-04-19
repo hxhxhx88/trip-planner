@@ -52,18 +52,18 @@ export type MapDay = {
 ## Files
 
 Create:
-- `/Users/xuhan/code/travel-tw/src/components/map/MapProvider.tsx` — wraps `<APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}>`. Mounted in `app/layout.tsx` (conditionally, only when key is set; otherwise children render without provider and map shows a placeholder).
-- `/Users/xuhan/code/travel-tw/src/components/map/MapPane.tsx` (client)
-- `/Users/xuhan/code/travel-tw/src/components/map/Pin.tsx`
-- `/Users/xuhan/code/travel-tw/src/components/map/Polyline.tsx` — uses Advanced Markers API via a wrapper.
-- `/Users/xuhan/code/travel-tw/src/components/map/DaySelector.tsx` — dropdown shared between Map and Right pane.
-- `/Users/xuhan/code/travel-tw/src/components/map/types.ts`
-- `/Users/xuhan/code/travel-tw/src/lib/model/map.ts` — `getMapDay(planId, dayId)` returning `MapDay` (cached).
+- `src/components/map/MapProvider.tsx` — wraps `<APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}>`. Mounted in `app/layout.tsx` (conditionally, only when key is set; otherwise children render without provider and map shows a placeholder).
+- `src/components/map/MapPane.tsx` (client)
+- `src/components/map/Pin.tsx`
+- `src/components/map/Polyline.tsx` — uses Advanced Markers API via a wrapper.
+- `src/components/map/DaySelector.tsx` — dropdown shared between Map and Right pane.
+- `src/components/map/types.ts`
+- `src/lib/model/map.ts` — `getMapDay(planId, dayId)` returning `MapDay` (cached).
 
 Modify:
-- `/Users/xuhan/code/travel-tw/src/components/editor/EditorShell.tsx` — mount `MapPane` on the left; remove placeholder.
-- `/Users/xuhan/code/travel-tw/src/app/layout.tsx` — mount `MapProvider`.
-- `/Users/xuhan/code/travel-tw/.env.example` — note that `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` is separate from the server-only `GOOGLE_MAPS_API_KEY` for client-map rendering. Document restriction (referrer-scope) in a comment.
+- `src/components/editor/EditorShell.tsx` — mount `MapPane` on the left; remove placeholder.
+- `src/app/layout.tsx` — mount `MapProvider`.
+- `.env.example` — note that `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` is separate from the server-only `GOOGLE_MAPS_API_KEY` for client-map rendering. Document restriction (referrer-scope) in a comment.
 
 ## Implementation notes
 

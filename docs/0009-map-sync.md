@@ -53,12 +53,12 @@ type SelectionState = {
 ## Files
 
 Modify (no new files):
-- `/Users/xuhan/code/travel-tw/src/components/map/MapPane.tsx` — subscribe to `selectedId`/`hoveredId`, emit on click/hover, implement pan/zoom effect.
-- `/Users/xuhan/code/travel-tw/src/components/map/Pin.tsx` — accept `selected` / `hovered` props; style accordingly.
-- `/Users/xuhan/code/travel-tw/src/components/map/Polyline.tsx` — same.
-- `/Users/xuhan/code/travel-tw/src/components/editor/TableView.tsx` — click/hover handlers call the store; row highlight reads from it.
-- `/Users/xuhan/code/travel-tw/src/components/editor/TimelineView.tsx` — same.
-- `/Users/xuhan/code/travel-tw/src/components/map/DaySelector.tsx` — already reads `currentDayId`; ensure symmetry.
+- `src/components/map/MapPane.tsx` — subscribe to `selectedId`/`hoveredId`, emit on click/hover, implement pan/zoom effect.
+- `src/components/map/Pin.tsx` — accept `selected` / `hovered` props; style accordingly.
+- `src/components/map/Polyline.tsx` — same.
+- `src/components/editor/TableView.tsx` — click/hover handlers call the store; row highlight reads from it.
+- `src/components/editor/TimelineView.tsx` — same.
+- `src/components/map/DaySelector.tsx` — already reads `currentDayId`; ensure symmetry.
 
 ## Implementation notes
 

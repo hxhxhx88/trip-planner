@@ -37,17 +37,17 @@ None.
 ## Files
 
 Modify (no new files beyond `loading.tsx`/`error.tsx`):
-- `/Users/xuhan/code/travel-tw/src/app/loading.tsx` (for `/`)
-- `/Users/xuhan/code/travel-tw/src/app/plans/[planId]/edit/loading.tsx`
-- `/Users/xuhan/code/travel-tw/src/app/p/[slug]/loading.tsx`
-- `/Users/xuhan/code/travel-tw/src/app/plans/[planId]/edit/error.tsx`
-- `/Users/xuhan/code/travel-tw/src/app/p/[slug]/error.tsx`
-- `/Users/xuhan/code/travel-tw/src/app/page.tsx` — export `unstable_instant`.
-- `/Users/xuhan/code/travel-tw/src/app/plans/[planId]/edit/page.tsx` — export `unstable_instant`.
-- `/Users/xuhan/code/travel-tw/src/app/p/[slug]/page.tsx` — export `unstable_instant`.
-- `/Users/xuhan/code/travel-tw/src/components/editor/EditorShell.tsx` — desktop-first banner + keyboard shortcuts.
-- `/Users/xuhan/code/travel-tw/src/components/places/PlacePreview.tsx` — `priority` / `sizes` where appropriate.
-- `/Users/xuhan/code/travel-tw/public/favicon.ico` (optional, simple).
+- `src/app/loading.tsx` (for `/`)
+- `src/app/plans/[planId]/edit/loading.tsx`
+- `src/app/p/[slug]/loading.tsx`
+- `src/app/plans/[planId]/edit/error.tsx`
+- `src/app/p/[slug]/error.tsx`
+- `src/app/page.tsx` — export `unstable_instant`.
+- `src/app/plans/[planId]/edit/page.tsx` — export `unstable_instant`.
+- `src/app/p/[slug]/page.tsx` — export `unstable_instant`.
+- `src/components/editor/EditorShell.tsx` — desktop-first banner + keyboard shortcuts.
+- `src/components/places/PlacePreview.tsx` — `priority` / `sizes` where appropriate.
+- `public/favicon.ico` (optional, simple).
 
 ## Implementation notes
 

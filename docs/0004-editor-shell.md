@@ -51,17 +51,17 @@ Initialized once per plan; `currentDayId` defaults to the first day's id (comput
 ## Files
 
 Create:
-- `/Users/xuhan/code/travel-tw/src/app/plans/[planId]/edit/page.tsx`
-- `/Users/xuhan/code/travel-tw/src/app/plans/[planId]/edit/layout.tsx` — optional; hold toolbar.
-- `/Users/xuhan/code/travel-tw/src/components/editor/EditorShell.tsx` (client) — mounts `SplitPane`, `DayTabs`, `SelectionHydrator`.
-- `/Users/xuhan/code/travel-tw/src/components/editor/SplitPane.tsx`
-- `/Users/xuhan/code/travel-tw/src/components/editor/DayTabs.tsx`
-- `/Users/xuhan/code/travel-tw/src/components/editor/AddDayDialog.tsx`
-- `/Users/xuhan/code/travel-tw/src/components/editor/LodgingSlot.tsx` (placeholder wiring)
-- `/Users/xuhan/code/travel-tw/src/components/editor/EmptyDay.tsx` — "Pick a lodging to start the day"
-- `/Users/xuhan/code/travel-tw/src/stores/selection.ts`
-- `/Users/xuhan/code/travel-tw/src/actions/days.ts` — `addDay`, `deleteDay`, `setDayLodging` (latter used by `0005`).
-- `/Users/xuhan/code/travel-tw/src/lib/model/plan.ts` — `getPlanForEditor(planId)` returning the shape the editor renders (plan + days + events + travels + places looked up).
+- `src/app/plans/[planId]/edit/page.tsx`
+- `src/app/plans/[planId]/edit/layout.tsx` — optional; hold toolbar.
+- `src/components/editor/EditorShell.tsx` (client) — mounts `SplitPane`, `DayTabs`, `SelectionHydrator`.
+- `src/components/editor/SplitPane.tsx`
+- `src/components/editor/DayTabs.tsx`
+- `src/components/editor/AddDayDialog.tsx`
+- `src/components/editor/LodgingSlot.tsx` (placeholder wiring)
+- `src/components/editor/EmptyDay.tsx` — "Pick a lodging to start the day"
+- `src/stores/selection.ts`
+- `src/actions/days.ts` — `addDay`, `deleteDay`, `setDayLodging` (latter used by `0005`).
+- `src/lib/model/plan.ts` — `getPlanForEditor(planId)` returning the shape the editor renders (plan + days + events + travels + places looked up).
 
 ## Implementation notes
 

@@ -58,22 +58,22 @@ export type BrochureData = {
 ## Files
 
 Create:
-- `/Users/xuhan/code/travel-tw/src/components/pdf/BrochureDocument.tsx`
-- `/Users/xuhan/code/travel-tw/src/components/pdf/Cover.tsx`
-- `/Users/xuhan/code/travel-tw/src/components/pdf/Overview.tsx`
-- `/Users/xuhan/code/travel-tw/src/components/pdf/PerDay.tsx`
-- `/Users/xuhan/code/travel-tw/src/components/pdf/DetailCard.tsx`
-- `/Users/xuhan/code/travel-tw/src/components/pdf/Footer.tsx`
-- `/Users/xuhan/code/travel-tw/src/components/pdf/styles.ts` — shared `StyleSheet.create` tokens.
-- `/Users/xuhan/code/travel-tw/src/components/pdf/fonts.ts` — font registration; `Font.register` calls.
-- `/Users/xuhan/code/travel-tw/src/components/pdf/fixtures.ts`
-- `/Users/xuhan/code/travel-tw/src/components/pdf/types.ts`
-- `/Users/xuhan/code/travel-tw/public/fonts/Geist-Regular.ttf` + `Geist-Bold.ttf` (sourced from the Geist GitHub — keep licensing file alongside).
-- `/Users/xuhan/code/travel-tw/scripts/pdf-preview.ts` — writes `out/preview.pdf`.
+- `src/components/pdf/BrochureDocument.tsx`
+- `src/components/pdf/Cover.tsx`
+- `src/components/pdf/Overview.tsx`
+- `src/components/pdf/PerDay.tsx`
+- `src/components/pdf/DetailCard.tsx`
+- `src/components/pdf/Footer.tsx`
+- `src/components/pdf/styles.ts` — shared `StyleSheet.create` tokens.
+- `src/components/pdf/fonts.ts` — font registration; `Font.register` calls.
+- `src/components/pdf/fixtures.ts`
+- `src/components/pdf/types.ts`
+- `public/fonts/Geist-Regular.ttf` + `Geist-Bold.ttf` (sourced from the Geist GitHub — keep licensing file alongside).
+- `scripts/pdf-preview.ts` — writes `out/preview.pdf`.
 
 Modify:
-- `/Users/xuhan/code/travel-tw/.gitignore` — add `/out/`.
-- `/Users/xuhan/code/travel-tw/package.json` — add `pnpm pdf:preview` script and `@react-pdf/renderer` dep.
+- `.gitignore` — add `/out/`.
+- `package.json` — add `pnpm pdf:preview` script and `@react-pdf/renderer` dep.
 
 ## Implementation notes
 

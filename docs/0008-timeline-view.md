@@ -46,15 +46,15 @@ Positions computed from the Day composition.
 ## Files
 
 Create:
-- `/Users/xuhan/code/travel-tw/src/components/editor/TimelineView.tsx`
-- `/Users/xuhan/code/travel-tw/src/components/editor/timeline/EventBlock.tsx`
-- `/Users/xuhan/code/travel-tw/src/components/editor/timeline/TravelConnector.tsx`
-- `/Users/xuhan/code/travel-tw/src/components/editor/timeline/HoursAxis.tsx`
-- `/Users/xuhan/code/travel-tw/src/components/editor/timeline/types.ts`
-- `/Users/xuhan/code/travel-tw/src/components/editor/ViewToggle.tsx`
+- `src/components/editor/TimelineView.tsx`
+- `src/components/editor/timeline/EventBlock.tsx`
+- `src/components/editor/timeline/TravelConnector.tsx`
+- `src/components/editor/timeline/HoursAxis.tsx`
+- `src/components/editor/timeline/types.ts`
+- `src/components/editor/ViewToggle.tsx`
 
 Modify:
-- `/Users/xuhan/code/travel-tw/src/components/editor/EditorShell.tsx` — render `ViewToggle` and switch between `TableView` / `TimelineView` in the right pane.
+- `src/components/editor/EditorShell.tsx` — render `ViewToggle` and switch between `TableView` / `TimelineView` in the right pane.
 
 ## Implementation notes
 

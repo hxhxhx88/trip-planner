@@ -58,10 +58,10 @@ export type CascadeResult = {
 ## Files
 
 Create:
-- `/Users/xuhan/code/travel-tw/src/lib/cascade.ts`
-- `/Users/xuhan/code/travel-tw/src/lib/autofill/backfill.ts`
-- `/Users/xuhan/code/travel-tw/src/lib/autofill/engine.ts`
-- `/Users/xuhan/code/travel-tw/src/lib/autofill/types.ts`
+- `src/lib/cascade.ts`
+- `src/lib/autofill/backfill.ts`
+- `src/lib/autofill/engine.ts`
+- `src/lib/autofill/types.ts`
 
 Modify: none in this sub-plan (wiring happens in `0012`).
 
