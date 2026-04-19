@@ -88,6 +88,8 @@ src/
       places.ts                      # server-side HTTP calls
       directions.ts
       staticMap.ts                   # URL builder
+      types.ts                       # response shapes (AutocompleteHit, PlaceDetails, DirectionsResult)
+      invalidate.ts                  # admin cache-invalidation helpers
     slug.ts                          # nanoid wrapper (16-char URL-safe)
     schemas.ts                       # shared Zod schemas + PlaceHours / Vehicle / Alert types
     utils.ts                         # shadcn cn() (clsx + tailwind-merge)

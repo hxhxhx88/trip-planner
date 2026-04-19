@@ -32,6 +32,11 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+
+# downloaded place photos — regenerated from Google on demand
+public/places/*
+!public/places/.gitkeep
 
 # vercel
 .vercel

@@ -113,7 +113,7 @@ export const directionsCache = pgTable('directions_cache', {
 `PlaceHours` type (in `src/lib/schemas.ts`):
 ```ts
 export type PlaceHours = {
-  weekly: Array<{ weekday: 0|1|2|3|4|5|6; open: string; close: string }>; // minutes since midnight → HH:MM strings
+  weekly: Array<{ weekday: 0|1|2|3|4|5|6; open: string; close: string }>; // weekday 0=Sun…6=Sat (Google-native); open/close HH:MM in plan timezone
   exceptions?: Array<{ date: string; open?: string; close?: string; closed?: boolean }>;
 };
 ```
@@ -164,6 +164,7 @@ Modify:
 - **shadcn theme** — accept the `base-nova` preset's `neutral` baseColor and OKLCH token set (includes `chart-1..5` and `sidebar-*` tokens we won't use yet — keep them; pruning is noise). Keep dark-mode tokens. Don't customize beyond defaults until a later polish pass.
 - **Migrations** — first migration generated from the empty schema → full table set. Commit both the schema and the generated SQL under `src/db/migrations/`. Use `drizzle-kit generate` then `drizzle-kit migrate` against `DATABASE_URL`.
 - **Env handling** — no `env.ts` wrapper in v1 (Next 16 exposes `process.env.X` in server code; we're not serving on Edge).
+- **`drizzle.config.ts` env loading** — drizzle-kit is a standalone CLI and doesn't auto-load `.env*` files the way Next does. Call `loadEnvConfig(process.cwd())` from `@next/env` at the top of `drizzle.config.ts` so `pnpm db:migrate` / `db:generate` / `db:studio` pick up `.env.local` with the same precedence as `next dev`.
 - **Worktree paths** — file paths in this doc (and the rest of `docs/`) read `...` for the canonical project root. When implementing inside a `.claude/worktrees/<branch>/` checkout, translate them to the worktree's mirror of the same path.
 - **`next.config.ts` `turbopack.root`** — set `turbopack.root = path.resolve(import.meta.dirname)` so Turbopack doesn't pick the parent repo's lockfile when building inside a worktree (silences the multi-lockfile warning). Harmless in non-worktree usage.
 - **Composite primary keys** — Drizzle's table-builder callback now expects an **array** (`(t) => [primaryKey({ columns: [...] })]`); the legacy object form `(t) => ({ pk: ... })` is deprecated.
