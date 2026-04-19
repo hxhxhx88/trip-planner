@@ -92,12 +92,15 @@ src/
       invalidate.ts                  # admin cache-invalidation helpers
     slug.ts                          # nanoid wrapper (16-char URL-safe)
     schemas.ts                       # shared Zod schemas + PlaceHours / Vehicle / Alert types
+    actions.ts                       # Result<T>, ActionError, ok/err/zodErr — server-action return convention
     utils.ts                         # shadcn cn() (clsx + tailwind-merge)
     model/
       plan.ts                        # read-side composition (plan + days + events + travels resolved)
+      plans.ts                       # plans-index and single-plan reads (listPlans, getPlan)
   stores/
     selection.ts                     # zustand store: { selectedId, hoveredId, currentDayId }
   actions/                           # 'use server' mutation actions grouped by entity
+    plans.ts                         # createPlan, renamePlan, setPlanTimezone, duplicatePlan, deletePlan
 next.config.ts                       # cacheComponents, serverExternalPackages, image remotePatterns
 drizzle.config.ts
 ```
@@ -112,7 +115,7 @@ drizzle.config.ts
 ### Next 16 specifics we honor
 
 - `cacheComponents: true` in `next.config.ts`. Default runtime is Node (required by `@react-pdf/renderer` and `pg`).
-- `params`/`searchParams` awaited in every dynamic route.
+- `params`/`searchParams` awaited in every dynamic route. **Under Cache Components, awaiting `params` at the top of a page component counts as "uncached data access" and fails the prerender unless wrapped in `<Suspense>`.** The project convention (established in `0003`'s settings page): the exported page component is synchronous, returns `<Suspense fallback={<Skeleton />}><Content paramsPromise={params} /></Suspense>`, and a nested async component does the `await params` + cached read. Apply this pattern to every dynamic page (`0004` editor, `0013` released view). Route handlers are unaffected — they run server-side and return a `Response`.
 - Map subtree is a `'use client'` leaf inside a server-rendered split-pane; server passes serialized plan-for-current-day as props.
 - `@react-pdf/renderer` added to `serverExternalPackages`.
 - `unstable_instant = { prefetch: 'static' }` exported from `/` and `/plans/[planId]/edit` after the full data shape settles (audited in `0016`).
@@ -177,16 +180,21 @@ Notes:
 
 ```ts
 'use server'
-export async function updateEvent(input: UpdateEventInput): Promise<Result<void, ActionError>> {
-  const parsed = UpdateEventSchema.parse(input);          // zod boundary
-  await db.update(events).set(parsed.patch).where(eq(events.id, parsed.id));
-  updateTag(`plan:${parsed.planId}`);
+import { updateTag } from 'next/cache';
+import { err, ok, type Result, zodErr } from '@/lib/actions';
+
+export async function updateEvent(input: UpdateEventInput): Promise<Result<void>> {
+  const parsed = UpdateEventSchema.safeParse(input);       // zod boundary
+  if (!parsed.success) return err(zodErr(parsed.error));
+  await db.update(events).set(parsed.data.patch).where(eq(events.id, parsed.data.id));
+  updateTag(`plan:${parsed.data.planId}`);
   return ok();
 }
 ```
 
-- Every action: Zod parse at top, DB mutate, `updateTag`, return `Result`.
-- Never throw for business errors — return a `Result` the caller can render.
+- Every action: `safeParse` at top (never `.parse()` — that throws), DB mutate, `updateTag`, return `Result`.
+- Never throw for business errors — return a `Result` the caller can render. The `Result<T, E>` / `ActionError` / `ok` / `err` / `zodErr` helpers live in `src/lib/actions.ts` (established in `0003`).
+- Import `cacheTag` / `updateTag` from `next/cache` directly; the `unstable_*` aliases are historical.
 - Grouped by entity in `src/actions/{plans,days,events,travels,places,alerts,release}.ts`.
 
 ### Cache tag namespacing

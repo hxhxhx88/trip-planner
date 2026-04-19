@@ -36,3 +36,28 @@ export function toPlanTz(date: Date, timezone: string): string {
 export function fromPlanTz(hhmm: string, dateISO: string, timezone: string): Date {
   return fromZonedTime(`${dateISO}T${normalizeTime(hhmm)}`, timezone);
 }
+
+export type EventTimeRow = {
+  id: string;
+  startTime: string | null;
+  dayDate: string;
+};
+
+export type RebasedTimePatch = { id: string; startTime: string };
+
+export function rebaseTimesAcrossTz(
+  rows: EventTimeRow[],
+  oldTz: string,
+  newTz: string,
+): RebasedTimePatch[] {
+  if (oldTz === newTz) return [];
+  const out: RebasedTimePatch[] = [];
+  for (const row of rows) {
+    if (!row.startTime) continue;
+    const hhmm = denormalizeTime(row.startTime);
+    const instant = fromPlanTz(hhmm, row.dayDate, oldTz);
+    const newHhmm = toPlanTz(instant, newTz);
+    out.push({ id: row.id, startTime: normalizeTime(newHhmm) });
+  }
+  return out;
+}

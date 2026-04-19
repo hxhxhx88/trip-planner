@@ -65,15 +65,23 @@ Modify:
 - **Action shape** —
   ```ts
   'use server'
-  export async function runAutoFill(input: RunAutoFillInput): Promise<RunAutoFillResult> {
-    const { planId } = RunAutoFillInputSchema.parse(input);
-    const result = await engine.runAutoFillForPlan(planId);
+  import { updateTag } from 'next/cache';
+  import { err, ok, type Result, zodErr } from '@/lib/actions';
+
+  export async function runAutoFill(
+    input: RunAutoFillInput,
+  ): Promise<Result<RunAutoFillPayload>> {
+    const parsed = RunAutoFillInputSchema.safeParse(input);
+    if (!parsed.success) return err(zodErr(parsed.error));
+    const { planId } = parsed.data;
+
+    const payload = await engine.runAutoFillForPlan(planId);
     await db.update(plans).set({ dirtySince: null }).where(eq(plans.id, planId));
     updateTag(`plan:${planId}`);
-    return result;
+    return ok(payload);
   }
   ```
-  Wrapped so any thrown errors are caught and returned as `result.errors` instead; never throw past the action boundary.
+  Follow the project-wide convention in `implementation.md` §6: `safeParse` + `Result` + `updateTag`. Engine errors bubble through `payload.errors` rather than thrown exceptions; never throw past the action boundary.
 - **Dirty tracking** — consolidate into a helper `markDirty(planId)` called from every mutation action. Cheap: a single UPDATE. Alternative (deferred): driven by a DB trigger — not worth the complexity in v1.
 - **Button UX** —
   - Dirty state → "Auto Fill" in primary variant (blue).

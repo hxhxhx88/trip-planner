@@ -38,16 +38,24 @@ Input Zod schemas (in `src/actions/plans.ts`):
 ## Files
 
 Create:
+- `src/lib/actions.ts` — shared `Result<T, ActionError>` / `ok` / `err` / `zodErr`. First actions file; establishes the convention referenced from `implementation.md` §6 and reused by every later action.
 - `src/actions/plans.ts`
 - `src/lib/model/plans.ts` — `listPlans()`, `getPlan(id)`, wrapped in `'use cache'` with appropriate tags.
 - `src/components/plans/PlansList.tsx`
 - `src/components/plans/NewPlanDialog.tsx`
+- `src/components/plans/NewPlanTrigger.tsx` — button + dialog pair used inline on `/`.
 - `src/components/plans/PlanRowActions.tsx`
-- `src/app/plans/new/page.tsx` — route that just mounts `NewPlanDialog` (separate URL so we can link to it).
+- `src/components/plans/StatusBadge.tsx`
+- `src/components/plans/settings/{RenamePlanForm,TimezoneForm,DangerZone}.tsx`
+- `src/app/plans/new/page.tsx` — client route that mounts `NewPlanDialog` with `open={true}` (separate URL so we can link to it). Closing the dialog pushes back to `/`.
 - `src/app/plans/[planId]/settings/page.tsx`
 
 Modify:
 - `src/app/page.tsx` — render `PlansList`.
+- `src/lib/time.ts` — add `rebaseTimesAcrossTz` helper.
+
+Install via shadcn CLI:
+- `pnpm shadcn add badge dropdown-menu` — not in 0001's initial set; this milestone needs them for the status badge and row-action menu.
 
 ## Implementation notes
 
@@ -65,7 +73,8 @@ Modify:
 - **deletePlan** — cascade delete via FK. Also remove downloaded photos for places referenced *only* by this plan? Not worth it in v1 — photos are cheap, shared, and the overrides cascade.
 - **Dialog vs route** — `NewPlanDialog` can be opened from the list (client dialog) OR deep-linked at `/plans/new` (server wrapper that renders the same dialog with `open={true}`). Use `router.push('/plans/[planId]/edit')` on success.
 - **Settings page** — form with three sections: General (name, timezone), Duplicate, Danger zone (delete with confirm). Separate action per section for clearer server-action responses.
-- **Status badge** — small shadcn `Badge` variant; Draft (neutral) / Released (green).
+- **Status badge** — shadcn's `Badge` ships only `default | secondary | destructive | outline | ghost | link` variants (no `success`). Use `variant="secondary"` for Draft and `variant="outline"` + emerald Tailwind classes (e.g. `border-emerald-500/40 bg-emerald-500/10 text-emerald-600`) for Released.
+- **Dynamic-route Suspense** — the `/plans/[planId]/settings` page awaits `params` + calls the cached `getPlan(id)`. Under `cacheComponents: true`, this pattern requires a `<Suspense>` boundary around the async content; the page component itself must be synchronous. See `implementation.md` §3 "Next 16 specifics we honor" for the project-wide convention.
 - **Sort** — plans list sorted by `updatedAt desc` by default.
 
 ## Verification
