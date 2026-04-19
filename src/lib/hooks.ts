@@ -75,6 +75,26 @@ function subscribeLocalStorage(callback: () => void) {
   };
 }
 
+export function useKeydown(handler: (e: KeyboardEvent) => void): void {
+  const ref = useRef(handler);
+  useEffect(() => {
+    ref.current = handler;
+  }, [handler]);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => ref.current(e);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+}
+
+export function isTypingTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  const tag = target.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return true;
+  if (target.isContentEditable) return true;
+  return false;
+}
+
 export function useLocalStorage<T extends string>(
   key: string,
   initial: T,

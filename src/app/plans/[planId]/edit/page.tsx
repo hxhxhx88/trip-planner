@@ -4,6 +4,12 @@ import { Suspense } from "react";
 import { EditorShell } from "@/components/editor/EditorShell";
 import { SelectionHydrator } from "@/components/editor/SelectionHydrator";
 import { getPlanForEditor } from "@/lib/model/plan";
+import Loading from "./loading";
+
+export const unstable_instant = {
+  prefetch: "static",
+  samples: [{ params: { planId: "sample" } }],
+};
 
 export default function EditPage({
   params,
@@ -11,7 +17,7 @@ export default function EditPage({
   params: Promise<{ planId: string }>;
 }) {
   return (
-    <Suspense fallback={<EditorSkeleton />}>
+    <Suspense fallback={<Loading />}>
       <EditorContent paramsPromise={params} />
     </Suspense>
   );
@@ -33,16 +39,5 @@ async function EditorContent({
         <EditorShell data={data} />
       </div>
     </>
-  );
-}
-
-function EditorSkeleton() {
-  return (
-    <div className="grid h-full grid-cols-2">
-      <div className="border-r bg-muted/40" />
-      <div className="p-6">
-        <div className="h-8 w-48 animate-pulse rounded bg-muted" />
-      </div>
-    </div>
   );
 }

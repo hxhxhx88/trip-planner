@@ -66,6 +66,7 @@ export function ReleasedView({ data, alerts }: Props) {
               places={places}
               dayAlerts={alertsByDay[day.id] ?? []}
               alertsByEntity={alertsByEntity}
+              firstDay={i === 0}
             />
           ))}
         </div>

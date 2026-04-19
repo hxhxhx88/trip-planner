@@ -2,6 +2,8 @@ import { NewPlanTrigger } from "@/components/plans/NewPlanTrigger";
 import { PlansList } from "@/components/plans/PlansList";
 import { listPlans } from "@/lib/model/plans";
 
+export const unstable_instant = { prefetch: "static" };
+
 export default async function Home() {
   const plans = await listPlans();
 

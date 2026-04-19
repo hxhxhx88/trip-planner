@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { ImageOff } from "lucide-react";
 import { useState } from "react";
 
@@ -80,12 +81,13 @@ function PhotoThumb({
     );
   }
   return (
-    <div className="size-20 shrink-0 overflow-hidden rounded bg-muted">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+    <div className="relative size-20 shrink-0 overflow-hidden rounded bg-muted">
+      <Image
         src={`/api/places/photo/${placeId}/0`}
         alt=""
-        className="size-full object-cover"
+        fill
+        sizes="80px"
+        className="object-cover"
         onError={() => setBroken(true)}
       />
     </div>

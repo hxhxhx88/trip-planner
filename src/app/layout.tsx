@@ -20,6 +20,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Travel Planner",
   description: "Human-in-the-loop trip itinerary planner.",
+  icons: { icon: "/favicon.ico" },
+  openGraph: {
+    title: "Travel Planner",
+    description: "Human-in-the-loop trip itinerary planner.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({

@@ -11,9 +11,15 @@ type Props = {
   event: DayEvent;
   place: PlanForEditor["places"][string] | null;
   alerts: Alert[];
+  preload?: boolean;
 };
 
-export function ReleasedEventCard({ event, place, alerts }: Props) {
+export function ReleasedEventCard({
+  event,
+  place,
+  alerts,
+  preload = false,
+}: Props) {
   const hasIssue = alerts.some((a) => a.severity === "issue");
   const hasWarning = alerts.some((a) => a.severity === "warning");
   const timeLabel = formatTimeRange(event.startTime, event.stayDuration);
@@ -26,8 +32,9 @@ export function ReleasedEventCard({ event, place, alerts }: Props) {
             src={`/places/${place.googlePlaceId}/0.jpg`}
             alt={place.name}
             fill
-            sizes="(max-width: 448px) 100vw, 448px"
+            sizes="(max-width: 768px) 100vw, 320px"
             className="object-cover"
+            preload={preload}
           />
         </div>
       ) : place ? (

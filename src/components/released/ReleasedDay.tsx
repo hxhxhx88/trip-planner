@@ -23,6 +23,7 @@ type Props = {
   places: PlanForEditor["places"];
   dayAlerts: Alert[];
   alertsByEntity: Record<string, Alert[]>;
+  firstDay?: boolean;
 };
 
 export function ReleasedDay({
@@ -33,6 +34,7 @@ export function ReleasedDay({
   places,
   dayAlerts,
   alertsByEntity,
+  firstDay = false,
 }: Props) {
   const rows = getDayComposition({ day, events, travels });
   const startPlace = day.startLodgingPlaceId
@@ -48,17 +50,21 @@ export function ReleasedDay({
   const middle = rows.slice(1, -1);
 
   const nodes: React.ReactNode[] = [];
+  let eventOrdinal = 0;
   for (let i = 0; i < middle.length; i++) {
     const row = middle[i];
     if (row.kind === "event") {
       const event = row.data;
       const place = event.placeId ? (places[event.placeId] ?? null) : null;
+      const preload = firstDay && eventOrdinal === 0;
+      eventOrdinal += 1;
       nodes.push(
         <ReleasedEventCard
           key={`event-${event.id}`}
           event={event}
           place={place}
           alerts={alertsByEntity[event.id] ?? []}
+          preload={preload}
         />,
       );
       continue;

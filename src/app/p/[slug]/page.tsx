@@ -4,6 +4,12 @@ import { Suspense } from "react";
 import { ReleasedView } from "@/components/released/ReleasedView";
 import { getAlertsForPlan } from "@/lib/model/alerts";
 import { getPlanForReleased, getPlanIdBySlug } from "@/lib/model/released";
+import Loading from "./loading";
+
+export const unstable_instant = {
+  prefetch: "static",
+  samples: [{ params: { slug: "sample" } }],
+};
 
 export default function ReleasedPage({
   params,
@@ -11,7 +17,7 @@ export default function ReleasedPage({
   params: Promise<{ slug: string }>;
 }) {
   return (
-    <Suspense fallback={<ReleasedSkeleton />}>
+    <Suspense fallback={<Loading />}>
       <ReleasedContent paramsPromise={params} />
     </Suspense>
   );
@@ -31,20 +37,4 @@ async function ReleasedContent({
   ]);
   if (!data) notFound();
   return <ReleasedView data={data} alerts={alerts} />;
-}
-
-function ReleasedSkeleton() {
-  return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <div className="h-7 w-48 animate-pulse rounded bg-muted" />
-        <div className="h-4 w-32 animate-pulse rounded bg-muted" />
-      </div>
-      <div className="space-y-3">
-        <div className="h-20 animate-pulse rounded-xl bg-muted" />
-        <div className="h-56 animate-pulse rounded-xl bg-muted" />
-        <div className="h-56 animate-pulse rounded-xl bg-muted" />
-      </div>
-    </div>
-  );
 }
