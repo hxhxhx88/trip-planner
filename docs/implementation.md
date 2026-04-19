@@ -111,7 +111,8 @@ src/
     actions.ts                       # Result<T>, ActionError, ok/err/zodErr — server-action return convention
     utils.ts                         # shadcn cn() (clsx + tailwind-merge)
     model/
-      plan.ts                        # read-side composition (plan + days + events + travels + places resolved)
+      plan.ts                        # read-side composition (plan + days + events + travels + places resolved);
+                                     # exports cached getPlanForEditor + uncached loadPlanForEditor (0011 split)
       plans.ts                       # plans-index and single-plan reads (listPlans, getPlan)
       day.ts                         # pure getDayComposition({day, events, travels}) → DayRow[] (0006)
       map.ts                         # pure toMapDay(plan, dayId) → MapDay | null (0007)
@@ -168,7 +169,7 @@ Notes:
 - Times are stored as `time` (HH:MM) columns in the plan's timezone. Dates stored as `date`.
 - `travel_time` stored as an integer minute count.
 - `position` on `days` / `events` / `travels` is a sparse integer; reorder updates position only.
-- `locked_fields` is a JSONB array of strings naming fields the user has set (e.g. `["start_time", "stay_duration"]`), read by the cascade reducer to avoid overwriting.
+- `locked_fields` (DB column; exposed as `lockedFields` in app code) is a JSONB array of camelCase field names the user has set (e.g. `["startTime", "stayDuration"]`, matching the TS property names), read by the cascade reducer to avoid overwriting.
 
 ---
 
@@ -186,7 +187,7 @@ Notes:
 | 8 | `0008-timeline-view.md` | Vertical hours axis, Event blocks positioned by start + stay duration, Travel connectors, empty-space gaps, Table↔Timeline toggle. | 0006 |
 | 9 | `0009-map-sync.md` | Two-way click/hover sync Map ↔ right pane via Zustand; selection persists across view toggle; Day selector on Map. | 0007, 0008 |
 | 10 | `0010-validation-alerts.md` | Pure `validate(plan)` → `Alert[]`; all Issue + Warning rules; AlertPanel + inline markers; day-date-overlap rule. Defines Alert shape for Auto Fill. | 0006 |
-| 11 | `0011-autofill-engine.md` | (a) Backfill: Places metadata + Directions (round-up to next 15 min). (b) Cascade reducer: pure forward + backward + merge, respects `locked_fields`, fills empty descriptions from Google data. Returns `{ updates, alerts }`. | 0002, 0010 |
+| 11 | `0011-autofill-engine.md` | (a) Backfill: Places metadata + Directions via shared cache-aware helpers (`getOrFetchPlaceDetails`, `getOrComputeDirections`); directions rounded up to next 15 min. (b) Cascade reducer: pure forward + backward + merge, respects `lockedFields`, fills empty descriptions from Google's `category`. Engine returns `{ alerts }`; caller owns `updateTag`. Also splits `getPlanForEditor` into cached/uncached pair and exports `dedupeAlerts`. | 0002, 0010 |
 | 12 | `0012-autofill-action.md` | Server action orchestrates 0011 and persists results; "Auto Fill" button in editor header; dirty-state indicator after any edit. | 0011 |
 | 13 | `0013-release-sharing.md` | Release/Unrelease actions; `/p/[slug]` mobile-first read-only route; live state from DB; all alerts shown; PDF download link. | 0003, 0010 |
 | 14 | `0014-pdf-tree.md` | React-PDF component tree with fixtures: Cover, Overview, PerDay (Timeline + StaticMap + DetailCards), Footer with alert summary. Runnable from a local script for iteration. | 0005 |

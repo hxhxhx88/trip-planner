@@ -1,12 +1,12 @@
-import { and, eq, sql } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 
-import { db, schema } from "@/db";
-import { computeRoute, NoRouteError } from "@/lib/google/directions";
+import {
+  getOrComputeDirections,
+  NoRouteError,
+} from "@/lib/google/directions";
 import { GoogleConfigError, GoogleUpstreamError } from "@/lib/google/places";
 import type { DirectionsResult } from "@/lib/google/types";
 import { VehicleSchema } from "@/lib/schemas";
-import { roundUpToQuarter } from "@/lib/time";
 
 export async function GET(req: NextRequest): Promise<Response> {
   const { searchParams } = req.nextUrl;
@@ -26,62 +26,13 @@ export async function GET(req: NextRequest): Promise<Response> {
   }
   const vehicle = parsed.data;
 
-  const [cached] = await db
-    .select()
-    .from(schema.directionsCache)
-    .where(
-      and(
-        eq(schema.directionsCache.originPlaceId, origin),
-        eq(schema.directionsCache.destPlaceId, dest),
-        eq(schema.directionsCache.vehicle, vehicle),
-      ),
-    )
-    .limit(1);
-
-  if (cached) {
-    console.log(`[directions] cache hit ${origin}->${dest} (${vehicle})`);
-    const result: DirectionsResult = {
-      travelTime: cached.travelTime,
-      routePath: cached.routePath,
-      vehicle,
-      cached: true,
-    };
-    return Response.json(result);
-  }
-
   try {
-    const { travelTimeMinutes, routePath } = await computeRoute(origin, dest, vehicle);
-    const travelTime = roundUpToQuarter(travelTimeMinutes);
-
-    await db
-      .insert(schema.directionsCache)
-      .values({
-        originPlaceId: origin,
-        destPlaceId: dest,
-        vehicle,
-        travelTime,
-        routePath,
-        fetchedAt: new Date(),
-      })
-      .onConflictDoUpdate({
-        target: [
-          schema.directionsCache.originPlaceId,
-          schema.directionsCache.destPlaceId,
-          schema.directionsCache.vehicle,
-        ],
-        set: {
-          travelTime: sql`excluded.travel_time`,
-          routePath: sql`excluded.route_path`,
-          fetchedAt: sql`excluded.fetched_at`,
-        },
-      });
-
-    const result: DirectionsResult = {
-      travelTime,
-      routePath,
+    const { travelTime, routePath, cached } = await getOrComputeDirections(
+      origin,
+      dest,
       vehicle,
-      cached: false,
-    };
+    );
+    const result: DirectionsResult = { travelTime, routePath, vehicle, cached };
     return Response.json(result);
   } catch (err) {
     if (err instanceof GoogleConfigError) {

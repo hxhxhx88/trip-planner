@@ -41,12 +41,13 @@ Action types (`src/actions/autofill.ts`):
 ```ts
 RunAutoFillInput = { planId: string }
 RunAutoFillResult = {
-  filledEvents: number;
-  filledTravels: number;
   alerts: Alert[];
-  errors: Array<{ dayId: string; message: string }>;
 };
 ```
+
+Matches the engine's `runAutoFillForPlan(planId): Promise<{ alerts: Alert[] }>` shape (established in `0011`). Counts of what got filled are not returned explicitly — the toast reads the alert set (e.g. "Auto Fill complete · 2 issues, 1 warning") and the UI re-reads the cached plan after `updateTag`. If we later want "Filled N events" copy, widen the engine to return persisted-id arrays; not needed for v1.
+
+Route failures (no-route, Google upstream errors) are already folded into `alerts` by the engine as `cascade_unresolved` entries on the offending Travel, so there is no separate `errors` field.
 
 ## Files
 
@@ -67,27 +68,28 @@ Modify:
   'use server'
   import { updateTag } from 'next/cache';
   import { err, ok, type Result, zodErr } from '@/lib/actions';
+  import { runAutoFillForPlan } from '@/lib/autofill/engine';
 
   export async function runAutoFill(
     input: RunAutoFillInput,
-  ): Promise<Result<RunAutoFillPayload>> {
+  ): Promise<Result<RunAutoFillResult>> {
     const parsed = RunAutoFillInputSchema.safeParse(input);
     if (!parsed.success) return err(zodErr(parsed.error));
     const { planId } = parsed.data;
 
-    const payload = await engine.runAutoFillForPlan(planId);
+    const { alerts } = await runAutoFillForPlan(planId);
     await db.update(plans).set({ dirtySince: null }).where(eq(plans.id, planId));
     updateTag(`plan:${planId}`);
-    return ok(payload);
+    return ok({ alerts });
   }
   ```
-  Follow the project-wide convention in `implementation.md` §6: `safeParse` + `Result` + `updateTag`. Engine errors bubble through `payload.errors` rather than thrown exceptions; never throw past the action boundary.
+  The engine is pure `{ alerts }` in/out; `updateTag` is this action's responsibility (the engine cannot call it — `updateTag` is Server-Action-scoped in Next 16). Follow `implementation.md` §6 conventions: `safeParse` + `Result` + `updateTag`. The engine folds Google / route failures into `alerts` rather than throwing, so there's no `throw` to catch past the action boundary.
 - **Dirty tracking** — consolidate into a helper `markDirty(planId)` called from every mutation action. Cheap: a single UPDATE. Alternative (deferred): driven by a DB trigger — not worth the complexity in v1.
 - **Button UX** —
   - Dirty state → "Auto Fill" in primary variant (blue).
   - Clean state → "Auto Fill again" in secondary (outlined).
   - Running → spinner + "Filling…", disabled.
-  - On success → toast "Filled 3 events, 4 travels. 1 new warning." `AlertPanel` count updates automatically via cached read.
+  - On success → toast "Auto Fill complete · N issues, M warnings" (counts derived from the returned `alerts`). `AlertPanel` re-renders from the cached read invalidated by `updateTag`.
 - **Guardrails** — debounce double-clicks; disable while a previous run is in flight.
 - **Cache invalidation** — action updates `plan:${planId}` via `updateTag`; editor refreshes via the cached model layer.
 - **No auto-triggers** — per product §5.6, Auto Fill is explicit only. Do **not** hook it into mutation actions.
@@ -98,7 +100,7 @@ Modify:
 1. Open editor with a plan where you've added 3 events and picked vehicles but no travel times. Click "Auto Fill" → button shows spinner → within ~2s it settles; travel rows now display `travelTime` and Map shows polylines.
 2. Cascade: type `09:00` on Event 1 start, `17:00` on Event 3 start, leave Event 2 blank → Auto Fill → Event 2 inherits a start time that makes the math work; if gap is wide enough, Event 2 gets a `stayDuration` too; if not computable, an Issue appears.
 3. Lock respected: type a deliberately wrong start time (`23:00`) on an Event — run Auto Fill → start time stays `23:00`; cascade emits a `cascade_unresolved` or `event_outside_hours` Alert.
-4. Re-run Auto Fill when nothing has changed → toast says "0 changes"; no DB writes (check via server log count).
+4. Re-run Auto Fill when nothing has changed → toast shows the same alert counts as the prior run; cascade produces zero event writes and Google requests all serve from cache (verify via `[places/details] cache hit` / `[directions] cache hit` server logs — no upstream calls).
 5. Edit any field → `plans.dirtySince` becomes non-null; button flips to "Auto Fill" primary. After running, button flips back to "Auto Fill again" secondary.
 6. Simulate Google Directions failure (temporarily point `/api/directions` to return 500) → run Auto Fill → error toast names the offending Travel; other Travels still fill. Restore.
 7. Two tabs racing: tab A edits event, tab B clicks Auto Fill → tab A's subsequent save triggers a conflict; Table view reconciles; no data loss (last-write-wins, documented in `0006`).

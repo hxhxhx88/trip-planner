@@ -63,7 +63,12 @@ export async function getPlanForEditor(
   "use cache";
   cacheTag(`plan:${planId}`);
   cacheTag("plans:index");
+  return loadPlanForEditor(planId);
+}
 
+export async function loadPlanForEditor(
+  planId: string,
+): Promise<PlanForEditor | null> {
   const [plan] = await db
     .select()
     .from(schema.plans)

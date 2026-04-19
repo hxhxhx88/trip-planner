@@ -1,4 +1,8 @@
+import { and, eq, sql } from "drizzle-orm";
+
+import { db, schema } from "@/db";
 import type { Vehicle } from "@/lib/schemas";
+import { roundUpToQuarter } from "@/lib/time";
 
 import { GoogleConfigError, GoogleUpstreamError } from "./places";
 
@@ -58,6 +62,69 @@ export async function computeRoute(
     travelTimeMinutes: Math.ceil(seconds / 60),
     routePath: decodePolyline(encoded),
   };
+}
+
+export async function getOrComputeDirections(
+  origin: string,
+  dest: string,
+  vehicle: Vehicle,
+): Promise<{
+  travelTime: number;
+  routePath: [number, number][];
+  cached: boolean;
+}> {
+  const [cachedRow] = await db
+    .select()
+    .from(schema.directionsCache)
+    .where(
+      and(
+        eq(schema.directionsCache.originPlaceId, origin),
+        eq(schema.directionsCache.destPlaceId, dest),
+        eq(schema.directionsCache.vehicle, vehicle),
+      ),
+    )
+    .limit(1);
+
+  if (cachedRow) {
+    console.log(`[directions] cache hit ${origin}->${dest} (${vehicle})`);
+    return {
+      travelTime: cachedRow.travelTime,
+      routePath: cachedRow.routePath,
+      cached: true,
+    };
+  }
+
+  const { travelTimeMinutes, routePath } = await computeRoute(
+    origin,
+    dest,
+    vehicle,
+  );
+  const travelTime = roundUpToQuarter(travelTimeMinutes);
+
+  await db
+    .insert(schema.directionsCache)
+    .values({
+      originPlaceId: origin,
+      destPlaceId: dest,
+      vehicle,
+      travelTime,
+      routePath,
+      fetchedAt: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: [
+        schema.directionsCache.originPlaceId,
+        schema.directionsCache.destPlaceId,
+        schema.directionsCache.vehicle,
+      ],
+      set: {
+        travelTime: sql`excluded.travel_time`,
+        routePath: sql`excluded.route_path`,
+        fetchedAt: sql`excluded.fetched_at`,
+      },
+    });
+
+  return { travelTime, routePath, cached: false };
 }
 
 export function decodePolyline(str: string): [number, number][] {

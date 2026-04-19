@@ -69,7 +69,9 @@ Create "Tokyo 3-day". Add 3 Days. Each day: pick a Lodging, add 3 Events with pa
 Place a restaurant at 14:30 at a venue whose Google hours close at 14:00. Expect an Issue in Table, Timeline, the released view, and the PDF footer's alert count. **Pass criteria: alert text names both the venue and its close time.**
 
 ### Scenario 3 — Partial path
-Create a Day with 3 Events, leave stay duration blank on the middle one, set start times only on Event 1 and Event 3. Click Auto Fill. Expect `cascade_unresolved` Issue on Event 2's duration. **Pass criteria: alert message is specific; other events' values untouched.**
+Create a Day with 3 Events. Give Event 1 `start=09:00, stayDuration=30` and Event 3 `start=17:00` (no duration). Leave Event 2 entirely blank. Pick vehicles on both Travels and click Auto Fill. Expect: Auto Fill populates travel times; cascade derives Event 2's `startTime` from forward and its `stayDuration` via combined forward-start + backward-end. No `cascade_unresolved` fires (both ends are anchored, so cascade resolves cleanly).
+
+Then adjust: clear Event 3's `startTime` as well (no anchor on the end). Click Auto Fill again. Expect: Event 2's times remain blank (no anchor → no candidate). Today cascade does NOT emit `cascade_unresolved` for the "no candidate" case — it only fires on forward/backward disagreements; see `0011` *Merge* notes. If we want the partial-path Issue surfaced (product §9), add a "required field still null after cascade" rule to `validate()` or to the cascade merge step. **Pass criteria (current): Event 1's values untouched; no spurious cascade over-write. Known gap: no alert for the unanchored Event 2 — flag as follow-up.**
 
 ### Scenario 4 — Edit-after-release
 Release a plan. On the editor, change an event's description. Reload the released URL on desktop and on phone — both show the new description. **Pass criteria: no stale content; no cache staleness visible.**

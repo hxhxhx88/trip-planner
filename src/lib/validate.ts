@@ -39,6 +39,10 @@ export function validate(plan: PlanForEditor): Alert[] {
   return dedupe(alerts);
 }
 
+export function dedupeAlerts(alerts: Alert[]): Alert[] {
+  return dedupe(alerts);
+}
+
 function dedupe(alerts: Alert[]): Alert[] {
   const seen = new Set<string>();
   const out: Alert[] = [];

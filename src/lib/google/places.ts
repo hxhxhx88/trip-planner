@@ -1,3 +1,6 @@
+import { eq, sql } from "drizzle-orm";
+
+import { db, schema } from "@/db";
 import type { PlaceHours, WeeklyHours } from "@/lib/schemas";
 
 import type { AutocompleteHit, PlaceDetails } from "./types";
@@ -5,6 +8,7 @@ import type { AutocompleteHit, PlaceDetails } from "./types";
 const PLACES_BASE = "https://places.googleapis.com/v1";
 const DETAILS_FIELD_MASK =
   "id,displayName,formattedAddress,location,photos,regularOpeningHours,primaryTypeDisplayName";
+const PLACE_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 export class GoogleConfigError extends Error {}
 export class GoogleUpstreamError extends Error {
@@ -91,6 +95,78 @@ export async function fetchPlaceDetails(
   };
 
   return { details, raw: json };
+}
+
+export async function getOrFetchPlaceDetails(
+  placeId: string,
+): Promise<PlaceDetails> {
+  const [existing] = await db
+    .select()
+    .from(schema.places)
+    .where(eq(schema.places.googlePlaceId, placeId))
+    .limit(1);
+
+  if (existing && Date.now() - existing.fetchedAt.getTime() < PLACE_CACHE_TTL_MS) {
+    console.log(`[places/details] cache hit ${placeId}`);
+    return rowToDetails(existing);
+  }
+
+  const { details, raw } = await fetchPlaceDetails(placeId);
+
+  await db
+    .insert(schema.places)
+    .values({
+      googlePlaceId: details.googlePlaceId,
+      name: details.name,
+      address: details.address,
+      lat: details.lat,
+      lng: details.lng,
+      photos: details.photos,
+      hours: details.hours,
+      category: details.category,
+      fetchedAt: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: schema.places.googlePlaceId,
+      set: {
+        photos: sql`excluded.photos`,
+        hours: sql`excluded.hours`,
+        category: sql`excluded.category`,
+        fetchedAt: sql`excluded.fetched_at`,
+      },
+    });
+
+  await db
+    .insert(schema.placesCache)
+    .values({
+      googlePlaceId: details.googlePlaceId,
+      rawResponse: raw,
+      fetchedAt: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: schema.placesCache.googlePlaceId,
+      set: {
+        rawResponse: sql`excluded.raw_response`,
+        fetchedAt: sql`excluded.fetched_at`,
+      },
+    });
+
+  return details;
+}
+
+export function rowToDetails(
+  row: typeof schema.places.$inferSelect,
+): PlaceDetails {
+  return {
+    googlePlaceId: row.googlePlaceId,
+    name: row.name,
+    address: row.address,
+    lat: row.lat ?? 0,
+    lng: row.lng ?? 0,
+    photos: row.photos,
+    hours: row.hours ?? null,
+    category: row.category,
+  };
 }
 
 function mapHours(raw: RawHours | undefined): PlaceHours | null {
