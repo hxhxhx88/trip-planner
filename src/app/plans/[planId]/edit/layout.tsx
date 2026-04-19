@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
-import { ArrowLeftIcon, SettingsIcon } from "lucide-react";
+import { ArrowLeftIcon, FileDownIcon, SettingsIcon } from "lucide-react";
 
 import { AutoFillButton } from "@/components/editor/AutoFillButton";
 import { ReleaseBanner } from "@/components/editor/ReleaseBanner";
@@ -61,6 +61,21 @@ async function Topbar({
           planId={planId}
           releasedSlug={plan?.releasedSlug ?? null}
         />
+        <Link
+          href={`/plans/${planId}/pdf`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-label="Download PDF"
+            className="gap-1"
+          >
+            <FileDownIcon className="size-4" />
+            PDF
+          </Button>
+        </Link>
       </div>
     </header>
   );

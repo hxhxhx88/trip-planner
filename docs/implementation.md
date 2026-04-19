@@ -61,7 +61,7 @@ src/
       [planId]/
         edit/page.tsx                # split-pane editor (server wrapper)
         settings/page.tsx            # rename, tz, duplicate, delete
-        pdf/route.ts                 # streaming PDF route handler
+        pdf/route.tsx                # streaming PDF route handler (JSX → .tsx)
     p/[slug]/page.tsx                # released, mobile-first, read-only (0013)
     p/[slug]/layout.tsx              # mobile container + generateMetadata (0013)
     p/[slug]/not-found.tsx           # friendly 404 for unreleased / deleted (0013)

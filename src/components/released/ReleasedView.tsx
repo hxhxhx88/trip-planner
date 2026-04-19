@@ -40,6 +40,14 @@ export function ReleasedView({ data, alerts }: Props) {
           {dateRange ? `${dateRange} · ` : ""}
           {plan.timezone}
         </p>
+        <a
+          href={`/plans/${plan.id}/pdf`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-sm text-primary underline-offset-2 hover:underline"
+        >
+          Download PDF
+        </a>
       </header>
 
       {days.length === 0 ? (
