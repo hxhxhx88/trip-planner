@@ -1,0 +1,1 @@
+ALTER TABLE "plans" ADD COLUMN "tz_set_by_user" boolean DEFAULT false NOT NULL;

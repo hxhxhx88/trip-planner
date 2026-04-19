@@ -1,5 +1,5 @@
 import { eq, sql } from "drizzle-orm";
-import type { NextRequest } from "next/server";
+import { after, type NextRequest } from "next/server";
 
 import { db, schema } from "@/db";
 import {
@@ -9,6 +9,7 @@ import {
   PlaceNotFoundError,
 } from "@/lib/google/places";
 import type { PlaceDetails } from "@/lib/google/types";
+import { ensurePhoto } from "@/lib/places/photos";
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -26,6 +27,9 @@ export async function GET(req: NextRequest): Promise<Response> {
 
   if (existing && Date.now() - existing.fetchedAt.getTime() < THIRTY_DAYS_MS) {
     console.log(`[places/details] cache hit ${placeId}`);
+    if (existing.photos.length > 0) {
+      after(() => ensurePhoto(placeId, 0));
+    }
     return Response.json(rowToDetails(existing));
   }
 
@@ -72,6 +76,10 @@ export async function GET(req: NextRequest): Promise<Response> {
           fetchedAt: sql`excluded.fetched_at`,
         },
       });
+
+    if (details.photos.length > 0) {
+      after(() => ensurePhoto(details.googlePlaceId, 0));
+    }
 
     return Response.json(details);
   } catch (err) {

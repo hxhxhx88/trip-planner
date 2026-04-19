@@ -22,7 +22,12 @@ export function RightPane({ data }: Props) {
         days={data.days}
       />
       {day ? (
-        <DayContent day={day} places={data.places} />
+        <DayContent
+          planId={data.plan.id}
+          day={day}
+          days={data.days}
+          places={data.places}
+        />
       ) : (
         <div className="p-6 text-sm text-muted-foreground">
           No day selected.

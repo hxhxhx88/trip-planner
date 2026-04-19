@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { db, schema } from "@/db";
 import { err, ok, type Result, zodErr } from "@/lib/actions";
+import { maybeInferTimezone } from "@/lib/geo/maybeInfer";
 import { newSlug } from "@/lib/slug";
 
 const PlanIdSchema = z.string().min(1);
@@ -21,10 +22,15 @@ const SetDayLodgingInput = z.object({
   slot: z.enum(["start", "end"]),
   placeId: PlaceIdSchema.nullable(),
 });
+const InheritDayLodgingInput = z.object({
+  planId: PlanIdSchema,
+  dayId: DayIdSchema,
+});
 
 export type AddDayInputType = z.input<typeof AddDayInput>;
 export type DeleteDayInputType = z.input<typeof DeleteDayInput>;
 export type SetDayLodgingInputType = z.input<typeof SetDayLodgingInput>;
+export type InheritDayLodgingInputType = z.input<typeof InheritDayLodgingInput>;
 
 export async function addDay(
   input: AddDayInputType,
@@ -154,6 +160,68 @@ export async function setDayLodging(
     .returning({ id: schema.days.id });
   if (res.length === 0) {
     return err({ code: "not_found", message: "Day not found" });
+  }
+
+  updateTag(`plan:${planId}`);
+
+  if (placeId) {
+    await maybeInferTimezone(planId, placeId);
+  }
+
+  return ok();
+}
+
+export async function inheritDayLodging(
+  input: InheritDayLodgingInputType,
+): Promise<Result> {
+  const parsed = InheritDayLodgingInput.safeParse(input);
+  if (!parsed.success) return err(zodErr(parsed.error));
+  const { planId, dayId } = parsed.data;
+
+  const outcome = await db.transaction(async (tx) => {
+    const [target] = await tx
+      .select({ date: schema.days.date })
+      .from(schema.days)
+      .where(and(eq(schema.days.id, dayId), eq(schema.days.planId, planId)))
+      .limit(1);
+    if (!target) return { kind: "not_found" as const };
+
+    const earlier = await tx
+      .select({
+        date: schema.days.date,
+        startLodgingPlaceId: schema.days.startLodgingPlaceId,
+        endLodgingPlaceId: schema.days.endLodgingPlaceId,
+      })
+      .from(schema.days)
+      .where(eq(schema.days.planId, planId))
+      .orderBy(desc(schema.days.date));
+
+    const prev = earlier.find(
+      (d) =>
+        d.date < target.date &&
+        (d.startLodgingPlaceId !== null || d.endLodgingPlaceId !== null),
+    );
+    if (!prev) return { kind: "no_prev" as const };
+
+    await tx
+      .update(schema.days)
+      .set({
+        startLodgingPlaceId: prev.startLodgingPlaceId,
+        endLodgingPlaceId: prev.endLodgingPlaceId,
+      })
+      .where(eq(schema.days.id, dayId));
+
+    return { kind: "ok" as const };
+  });
+
+  if (outcome.kind === "not_found") {
+    return err({ code: "not_found", message: "Day not found" });
+  }
+  if (outcome.kind === "no_prev") {
+    return err({
+      code: "conflict",
+      message: "No previous day with lodging to inherit from",
+    });
   }
 
   updateTag(`plan:${planId}`);

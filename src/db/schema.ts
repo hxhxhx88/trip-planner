@@ -1,4 +1,5 @@
 import {
+  boolean,
   date,
   integer,
   jsonb,
@@ -16,6 +17,7 @@ export const plans = pgTable("plans", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   timezone: text("timezone").notNull(),
+  tzSetByUser: boolean("tz_set_by_user").default(false).notNull(),
   releasedSlug: text("released_slug").unique(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),

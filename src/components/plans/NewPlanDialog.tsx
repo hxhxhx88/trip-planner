@@ -54,7 +54,11 @@ export function NewPlanDialog({ open, onOpenChange }: Props) {
     const trimmed = name.trim();
     if (!trimmed || !timezone) return;
     startTransition(async () => {
-      const res = await createPlan({ name: trimmed, timezone });
+      const res = await createPlan({
+        name: trimmed,
+        timezone,
+        tzSetByUser: userTz !== null,
+      });
       if (!res.ok) {
         toast.error(res.error.message);
         return;

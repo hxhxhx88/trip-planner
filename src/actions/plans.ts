@@ -23,7 +23,11 @@ const TzSchema = z.string().refine(
   { message: "Invalid IANA timezone" },
 );
 
-const CreatePlanInput = z.object({ name: NameSchema, timezone: TzSchema });
+const CreatePlanInput = z.object({
+  name: NameSchema,
+  timezone: TzSchema,
+  tzSetByUser: z.boolean().optional(),
+});
 const RenamePlanInput = z.object({ id: PlanIdSchema, name: NameSchema });
 const DuplicatePlanInput = z.object({ id: PlanIdSchema });
 const DeletePlanInput = z.object({ id: PlanIdSchema });
@@ -46,6 +50,7 @@ export async function createPlan(
     id,
     name: parsed.data.name,
     timezone: parsed.data.timezone,
+    tzSetByUser: parsed.data.tzSetByUser ?? false,
   });
   updateTag("plans:index");
   return ok({ id });
@@ -107,7 +112,7 @@ export async function setPlanTimezone(
 
     await tx
       .update(schema.plans)
-      .set({ timezone: newTz, updatedAt: new Date() })
+      .set({ timezone: newTz, tzSetByUser: true, updatedAt: new Date() })
       .where(eq(schema.plans.id, id));
     return { notFound: false as const };
   });
@@ -140,6 +145,7 @@ export async function duplicatePlan(
       id: newId,
       name: `${src.name} (copy)`,
       timezone: src.timezone,
+      tzSetByUser: src.tzSetByUser,
       releasedSlug: null,
     });
 

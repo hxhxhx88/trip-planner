@@ -1,7 +1,8 @@
 import { cacheTag } from "next/cache";
-import { asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 
 import { db, schema } from "@/db";
+import type { PlaceHours, PlacePhoto } from "@/lib/schemas";
 import { denormalizeTime } from "@/lib/time";
 
 export type PlanForEditor = {
@@ -47,6 +48,9 @@ export type PlanForEditor = {
       lat: number | null;
       lng: number | null;
       category: string | null;
+      photos: PlacePhoto[];
+      hours: PlaceHours | null;
+      hoursSource: "google" | "override";
     }
   >;
 };
@@ -106,13 +110,36 @@ export async function getPlanForEditor(
             lat: schema.places.lat,
             lng: schema.places.lng,
             category: schema.places.category,
+            photos: schema.places.photos,
+            hours: schema.places.hours,
+            overrideHours: schema.planPlaceOverrides.hours,
           })
           .from(schema.places)
+          .leftJoin(
+            schema.planPlaceOverrides,
+            and(
+              eq(schema.planPlaceOverrides.placeId, schema.places.googlePlaceId),
+              eq(schema.planPlaceOverrides.planId, planId),
+            ),
+          )
           .where(inArray(schema.places.googlePlaceId, [...placeIds]))
       : [];
 
   const places: PlanForEditor["places"] = {};
-  for (const p of placesRows) places[p.googlePlaceId] = p;
+  for (const p of placesRows) {
+    const hasOverride = p.overrideHours !== null;
+    places[p.googlePlaceId] = {
+      googlePlaceId: p.googlePlaceId,
+      name: p.name,
+      address: p.address,
+      lat: p.lat,
+      lng: p.lng,
+      category: p.category,
+      photos: p.photos,
+      hours: hasOverride ? p.overrideHours : (p.hours ?? null),
+      hoursSource: hasOverride ? "override" : "google",
+    };
+  }
 
   return {
     plan: {

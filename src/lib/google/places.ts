@@ -43,13 +43,13 @@ export async function autocomplete(q: string, sessionToken: string): Promise<Aut
 
   const json = (await res.json()) as RawAutocompleteResponse;
   return (json.suggestions ?? [])
-    .filter((s): s is Required<Pick<RawSuggestion, "placeSuggestion">> =>
-      Boolean(s.placeSuggestion?.placeId),
+    .filter((s): s is Required<Pick<RawSuggestion, "placePrediction">> =>
+      Boolean(s.placePrediction?.placeId),
     )
     .map((s) => ({
-      placeId: s.placeSuggestion.placeId,
-      primary: s.placeSuggestion.structuredFormat?.mainText?.text ?? "",
-      secondary: s.placeSuggestion.structuredFormat?.secondaryText?.text ?? "",
+      placeId: s.placePrediction.placeId,
+      primary: s.placePrediction.structuredFormat?.mainText?.text ?? "",
+      secondary: s.placePrediction.structuredFormat?.secondaryText?.text ?? "",
     }));
 }
 
@@ -131,7 +131,7 @@ type RawAutocompleteResponse = {
 };
 
 type RawSuggestion = {
-  placeSuggestion?: {
+  placePrediction?: {
     placeId: string;
     structuredFormat?: {
       mainText?: { text?: string };
