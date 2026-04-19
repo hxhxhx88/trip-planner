@@ -74,9 +74,9 @@ src/
     editor/                          # SplitPane, DayTabs, RightPane, DayContent,
                                      # TableView, EventRow, TravelRow, LodgingRow,
                                      # LodgingSlot, VehicleSelect, AddEventButton,
-                                     # AddDayDialog, SelectionHydrator,
-                                     # MapPanePlaceholder (until 0007), TimelineView (0008)
-    map/                             # MapPane, Pin, Polyline, DaySelector (0007)
+                                     # AddDayDialog, SelectionHydrator, TimelineView (0008)
+    map/                             # MapProvider, MapPane, Pin, Polyline,
+                                     # DaySelector, types (0007)
     places/                          # PlacePicker, PlacePreview, HoursEditor
     plans/                           # PlansList, NewPlanDialog, PlanRowActions, StatusBadge, TimeAgo
     alerts/                          # AlertPanel, InlineMarker (0010)
@@ -109,6 +109,7 @@ src/
       plan.ts                        # read-side composition (plan + days + events + travels + places resolved)
       plans.ts                       # plans-index and single-plan reads (listPlans, getPlan)
       day.ts                         # pure getDayComposition({day, events, travels}) → DayRow[] (0006)
+      map.ts                         # pure toMapDay(plan, dayId) → MapDay | null (0007)
   stores/
     selection.ts                     # zustand store: { selectedId, hoveredId, currentDayId }
   actions/                           # 'use server' mutation actions grouped by entity

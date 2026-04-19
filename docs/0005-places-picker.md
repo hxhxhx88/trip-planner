@@ -68,6 +68,7 @@ Modify:
 - `src/actions/days.ts` — `setDayLodging` (start|end) calls `inferTimezoneIfUnset` after successful upsert.
 - `src/components/editor/LodgingSlot.tsx` — wire `PlacePicker` in, add "Inherit from prev day" button.
 - `package.json` — add `geo-tz` dep.
+- `next.config.ts` — add `"geo-tz"` to `serverExternalPackages`. `geo-tz` bundles native timezone shapefiles that Next / Turbopack cannot resolve through the module graph; leaving it external keeps it as a plain Node `require` at runtime.
 
 ## Implementation notes
 

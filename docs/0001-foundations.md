@@ -137,7 +137,7 @@ export type PlaceHours = {
 
 Create:
 - `drizzle.config.ts`
-- `.env.example` — `DATABASE_URL=postgres://localhost/travel_tw`, `GOOGLE_MAPS_API_KEY=`, `NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID=`
+- `.env.example` — `DATABASE_URL=postgres://localhost/travel_tw`, `GOOGLE_MAPS_API_KEY=` (server-only, Places/Directions), `NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID=` (Advanced-Marker Map ID). `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=` (client-exposed, for interactive map rendering) is added in `0007` when the map pane ships.
 - `src/db/index.ts`
 - `src/db/schema.ts`
 - `src/lib/time.ts`

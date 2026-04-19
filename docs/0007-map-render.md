@@ -38,35 +38,42 @@ Product §§5.8 (Map pane), 5.5 (travel route path), 5.2 (distinct Lodging pin).
 
 No new tables.
 
-New types (`src/components/map/types.ts`):
+New types (`src/components/map/types.ts`) — shaped post-filter (only renderable entities are present, so nullable lat/lng/routePath are resolved in the helper rather than in the type):
 ```ts
+import type { Vehicle } from "@/lib/schemas";
+
+export type MapPin        = { id: string; lat: number; lng: number; name: string };
+export type MapEventPin   = MapPin & { visitNumber: number };
+export type MapTravelLine = { id: string; vehicle: Vehicle | null; routePath: [number, number][] };
+
 export type MapDay = {
   dayId: string;
-  startLodging: { placeId: string; lat: number; lng: number; name: string } | null;
-  endLodging:   { placeId: string; lat: number; lng: number; name: string } | null;
-  events: Array<{ id: string; placeId: string | null; lat: number | null; lng: number | null; name: string; visitNumber: number }>;
-  travels: Array<{ id: string; vehicle: Vehicle | null; routePath: [number, number][] | null }>;
+  startLodging: MapPin | null;
+  endLodging:   MapPin | null;             // null when same place as start (§5.2 single-pin rule)
+  events:       MapEventPin[];             // 1..N numbered in position order; unplaced events excluded
+  travels:      MapTravelLine[];           // only travels whose routePath is non-null and ≥ 2 points
 };
 ```
 
 ## Files
 
 Create:
-- `src/components/map/MapProvider.tsx` — wraps `<APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}>`. Mounted in `app/layout.tsx` (conditionally, only when key is set; otherwise children render without provider and map shows a placeholder).
-- `src/components/map/MapPane.tsx` (client)
-- `src/components/map/Pin.tsx`
-- `src/components/map/Polyline.tsx` — uses Advanced Markers API via a wrapper.
-- `src/components/map/DaySelector.tsx` — dropdown shared between Map and Right pane.
-- `src/components/map/types.ts`
-- `src/lib/model/map.ts` — `getMapDay(planId, dayId)` returning `MapDay` (cached).
+- `src/components/map/MapProvider.tsx` — `"use client"`. Always mounted in `app/layout.tsx`; internally wraps children in `<APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}>` when the key is present, and returns `children` unchanged when it is not. `MapPane` renders a self-contained placeholder in the no-key path, so no context layering is required.
+- `src/components/map/MapPane.tsx` (`"use client"`) — top-level pane. Takes `data: PlanForEditor` as a prop (same shape the placeholder consumed), reads `currentDayId` from the selection store, and derives the per-day view model client-side via `toMapDay`. Mounts `<Map>` with overlays + a nested `FitBounds` child that uses `useMap()` to fit bounds on day / geometry change.
+- `src/components/map/Pin.tsx` — two exports: `LodgingPin` (dark `<AdvancedMarker>` with a filled `HomeIcon` glyph) and `EventPin` (blue marker with the `visitNumber` as the glyph). Both use vis.gl's `<AdvancedMarker>` + `<Pin>` primitives.
+- `src/components/map/Polyline.tsx` — thin wrapper around vis.gl's declarative `<Polyline>` component (shipped in v1.8+). Maps `vehicle → color` (`walk=#2563eb`, `drive=#dc2626`, `transit=#7c3aed`, `cycle=#059669`) and converts our `[lat, lng][]` payload to `{ lat, lng }[]` at the boundary. Renders nothing when `vehicle` is null or `routePath.length < 2`.
+- `src/components/map/DaySelector.tsx` — `"use client"`. Dropdown (shadcn `DropdownMenu`) in the map pane header. Reads/writes `currentDayId` via `useSelection`; items read `"Day N · MMM d"`. `DayTabs` (right pane, from 0006) is unchanged — both UIs are backed by the same store.
+- `src/components/map/types.ts` — `MapPin`, `MapEventPin`, `MapTravelLine`, `MapDay`.
+- `src/lib/model/map.ts` — pure client-safe helper `toMapDay(data: PlanForEditor, dayId: string | null): MapDay | null`. No `'use cache'`, no DB. Derives the day's pins + polylines from the already-fetched `PlanForEditor`; single-pin deduplication when `startLodgingPlaceId === endLodgingPlaceId`; visit numbers assigned 1..N across position-sorted events that have a placed `places[placeId]` with non-null lat/lng.
 
 Modify:
-- `src/components/editor/EditorShell.tsx` — mount `MapPane` on the left in place of `MapPanePlaceholder` (the `0004` shell renders the placeholder; this milestone swaps it out and deletes `MapPanePlaceholder.tsx`).
-- `src/app/layout.tsx` — mount `MapProvider`.
-- `.env.example` — note that `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` is separate from the server-only `GOOGLE_MAPS_API_KEY` for client-map rendering. Document restriction (referrer-scope) in a comment.
+- `src/components/editor/EditorShell.tsx` — mount `MapPane` on the left (both in the empty-days and populated branches) in place of `MapPanePlaceholder`; delete the placeholder file.
+- `src/app/layout.tsx` — wrap `{children}` (alongside `TooltipProvider`) in `<MapProvider>`.
+- `.env.example` — add `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` alongside `GOOGLE_MAPS_API_KEY` (the server-only key from 0002) and `NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID` (from 0001). Document restriction scopes (referrer for the client key, IP or unrestricted for the server key) in comments.
 
 Install:
-- `pnpm add @vis.gl/react-google-maps` — chosen in `implementation.md` §2 but deferred to this milestone (not installed by `0001`/`0004`).
+- `pnpm add @vis.gl/react-google-maps` — chosen in `implementation.md` §2 but deferred to this milestone. Version ≥ 1.8.3 (declarative `<Polyline>` component ships from that release).
+- `pnpm add -D @types/google.maps` — vis.gl declares this as a transitive dep, but pnpm does not hoist type packages to `node_modules/@types/`, so the `google.maps` global namespace (used by our `FitBounds` child that constructs `google.maps.LatLngBounds`) does not resolve in TypeScript without an explicit direct dependency.
 
 ## Implementation notes
 
@@ -75,10 +82,11 @@ Install:
 - **Async loading** — `<APIProvider>` already handles script loading; don't add `@googlemaps/js-api-loader` manually.
 - **Numbering** — Events by `position` ascending, filter those with a `placeId`, assign visit numbers 1..N in that filtered order. Unplaced events don't get a pin (no lat/lng).
 - **Polyline color** — `Polyline.tsx` takes a `vehicle` prop and picks a color from a constant map. Lines for travels without a `routePath` (vehicle not chosen, or Auto Fill not run) are simply not rendered — the map shows gaps, matching product §5.6 behavior.
-- **Bounds fitting** — on every `currentDayId` change: collect all lat/lngs from pins + polyline points; build a `LatLngBounds`; call `map.fitBounds(bounds, { padding: 32 })`. If only 1 point, set center + zoom 15.
-- **Server-to-client hand-off** — `getMapDay` is called in the Server Component wrapper and passed to `MapPane` as a prop. `MapPane` re-renders when the prop changes (day switched) OR reads `currentDayId` from the Zustand store and fetches via a tiny client-side endpoint — **we choose prop-pass** for simplicity; day switching goes through the server refresh path because we also re-render the Table / Timeline.
+- **Bounds fitting** — on every `currentDayId` / geometry change: collect all lat/lngs from pins + polyline points; build a `LatLngBounds`; call `map.fitBounds(bounds, 32)` (padding argument). If only 1 point, `setCenter` + `setZoom(15)`. Lives in a `FitBounds` child inside `<Map>` so it can call `useMap()`; depends on `mapDay` (memoised from `data` + `resolvedDayId`), so reference equality triggers re-fit.
+- **Server-to-client hand-off** — `MapPane` receives the existing `PlanForEditor` as a prop (identical to what `MapPanePlaceholder` consumed) and derives the per-day view model with the pure `toMapDay` helper. **This deliberately deviates from the originally-drafted "cached `getMapDay` with server refresh on day switch" approach**: the 0006 editor wires day switching entirely through Zustand (`setCurrentDay` → all subscribers re-render from already-fetched data, no `router.refresh()`), and the map mirrors that pattern for consistency. No new server fetch fires on day change.
 - **Bundle size** — `@vis.gl/react-google-maps` is already tree-shakeable. Confirm `<MapPane />` is in a `'use client'` file and NOT imported by any server component except via JSX (JSX pass-through is fine).
-- **No APIProvider key** fallback — when `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` is missing, `MapPane` renders a centered placeholder message with instructions. Don't crash dev bootstrap.
+- **No APIProvider key** fallback — when `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` is missing, `MapPane` renders a centered placeholder message with setup instructions. Don't crash dev bootstrap.
+- **Missing Map ID** — `<AdvancedMarker>` requires `mapId`. If `NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID` is unset the `<Map>` still renders but pins won't appear; `.env.example` documents the requirement alongside the key.
 
 ## Verification
 

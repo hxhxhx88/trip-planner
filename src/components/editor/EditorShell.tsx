@@ -1,9 +1,9 @@
 "use client";
 
 import { EmptyPlanCTA } from "@/components/editor/EmptyPlanCTA";
-import { MapPanePlaceholder } from "@/components/editor/MapPanePlaceholder";
 import { RightPane } from "@/components/editor/RightPane";
 import { SplitPane } from "@/components/editor/SplitPane";
+import { MapPane } from "@/components/map/MapPane";
 import type { PlanForEditor } from "@/lib/model/plan";
 
 type Props = {
@@ -14,7 +14,7 @@ export function EditorShell({ data }: Props) {
   if (data.days.length === 0) {
     return (
       <SplitPane
-        left={<MapPanePlaceholder days={[]} />}
+        left={<MapPane data={data} />}
         right={
           <EmptyPlanCTA
             planId={data.plan.id}
@@ -27,7 +27,7 @@ export function EditorShell({ data }: Props) {
 
   return (
     <SplitPane
-      left={<MapPanePlaceholder days={data.days} />}
+      left={<MapPane data={data} />}
       right={<RightPane data={data} />}
     />
   );
