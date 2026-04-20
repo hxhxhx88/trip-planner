@@ -12,7 +12,8 @@ import { getAlertsForPlan } from "@/lib/model/alerts";
 import { getPlanForEditor, type PlanForEditor } from "@/lib/model/plan";
 import { toTimelineModel } from "@/lib/model/timeline";
 
-const PDF_PX_PER_MIN = 0.4;
+const PDF_PX_PER_MIN = 0.6;
+const PDF_MAP_SIZE = { width: 640, height: 880 };
 const PHOTO_DIR = path.join(process.cwd(), "public", "places");
 
 export async function buildBrochureData(
@@ -42,6 +43,7 @@ export async function buildBrochureData(
         events: dayEvents,
         travels: dayTravels,
         places: plan.places,
+        size: PDF_MAP_SIZE,
       }),
       cards: buildCards(dayRef, dayEvents, plan.places),
     };

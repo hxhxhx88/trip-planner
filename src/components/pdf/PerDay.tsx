@@ -1,5 +1,6 @@
 import fs from "node:fs";
 
+import { Fragment } from "react";
 import { Image, Page, Text, View } from "@react-pdf/renderer";
 
 import { DetailCard } from "@/components/pdf/DetailCard";
@@ -22,6 +23,18 @@ function hourLabel(min: number): string {
   return minutesToHhmm(normalized);
 }
 
+function DayHeader({ day, dayIndex }: { day: BrochureDay; dayIndex: number }) {
+  return (
+    <View style={styles.dayHeader}>
+      <Text style={styles.dayKicker}>Day {dayIndex + 1}</Text>
+      <Text style={styles.dayTitle}>{formatDayHeader(day.date)}</Text>
+      {day.titleSummary ? (
+        <Text style={styles.daySummary}>{day.titleSummary}</Text>
+      ) : null}
+    </View>
+  );
+}
+
 function Timeline({ timeline }: { timeline: BrochureDay["timeline"] }) {
   const { axisStartMin, axisEndMin, pxPerMin, heightPx, items } = timeline;
 
@@ -41,7 +54,7 @@ function Timeline({ timeline }: { timeline: BrochureDay["timeline"] }) {
   }
 
   return (
-    <View style={styles.timelineFrame}>
+    <View style={styles.timelineFramePage}>
       <View style={{ position: "relative", height: heightPx }}>
         {halfHourTops.map((top, i) => (
           <View key={`h-${i}`} style={[styles.timelineHalfHourLine, { top }]} />
@@ -159,12 +172,12 @@ function isHttpUrl(s: string): boolean {
 function MapFrame({ path }: { path: string | null }) {
   const usable = path != null && (isHttpUrl(path) || fs.existsSync(path));
   return (
-    <View style={styles.mapFrame}>
+    <View style={styles.mapFramePage}>
       {usable ? (
         // eslint-disable-next-line jsx-a11y/alt-text -- react-pdf Image, not DOM img
-        <Image src={path} style={styles.mapImage} />
+        <Image src={path} style={styles.mapImagePage} />
       ) : (
-        <View style={styles.mapPlaceholder}>
+        <View style={styles.mapPlaceholderPage}>
           <Text style={styles.mapPlaceholderText}>Map unavailable</Text>
           <Text style={[styles.meta, { marginTop: 4 }]}>
             Will render once the route handler supplies a static-map URL.
@@ -175,22 +188,64 @@ function MapFrame({ path }: { path: string | null }) {
   );
 }
 
-export function PerDay({ data, day, dayIndex }: Props) {
+function DayCoverPage({
+  day,
+  dayIndex,
+}: {
+  day: BrochureDay;
+  dayIndex: number;
+}) {
+  return (
+    <Page size="A4" style={styles.dayCoverPage}>
+      <View style={styles.dayCoverInner}>
+        <Text style={styles.dayCoverKicker}>Day {dayIndex + 1}</Text>
+        <Text style={styles.dayCoverNumber}>
+          {String(dayIndex + 1).padStart(2, "0")}
+        </Text>
+        <Text style={styles.dayCoverDate}>{formatDayHeader(day.date)}</Text>
+        {day.titleSummary ? (
+          <Text style={styles.dayCoverSummary}>{day.titleSummary}</Text>
+        ) : null}
+      </View>
+    </Page>
+  );
+}
+
+function TimelinePage({
+  data,
+  day,
+  dayIndex,
+}: {
+  data: BrochureData;
+  day: BrochureDay;
+  dayIndex: number;
+}) {
+  return (
+    <Page size="A4" style={styles.page} wrap={false}>
+      <DayHeader day={day} dayIndex={dayIndex} />
+      <Timeline timeline={day.timeline} />
+      <Footer
+        planName={data.plan.name}
+        generatedAt={data.generatedAt}
+        alertSummary={data.alertSummary}
+      />
+    </Page>
+  );
+}
+
+function EventsPage({
+  data,
+  day,
+  dayIndex,
+}: {
+  data: BrochureData;
+  day: BrochureDay;
+  dayIndex: number;
+}) {
   const unscheduled = day.timeline.unscheduled;
   return (
     <Page size="A4" style={styles.page} wrap>
-      <View style={styles.dayHeader}>
-        <Text style={styles.dayKicker}>Day {dayIndex + 1}</Text>
-        <Text style={styles.dayTitle}>{formatDayHeader(day.date)}</Text>
-        {day.titleSummary ? (
-          <Text style={styles.daySummary}>{day.titleSummary}</Text>
-        ) : null}
-      </View>
-
-      <View style={styles.dayGrid} wrap={false}>
-        <Timeline timeline={day.timeline} />
-        <MapFrame path={day.mapImagePath} />
-      </View>
+      <DayHeader day={day} dayIndex={dayIndex} />
 
       {unscheduled.length > 0 ? (
         <View style={[styles.section, { marginBottom: 8 }]}>
@@ -212,5 +267,38 @@ export function PerDay({ data, day, dayIndex }: Props) {
         alertSummary={data.alertSummary}
       />
     </Page>
+  );
+}
+
+function MapPage({
+  data,
+  day,
+  dayIndex,
+}: {
+  data: BrochureData;
+  day: BrochureDay;
+  dayIndex: number;
+}) {
+  return (
+    <Page size="A4" style={styles.page}>
+      <DayHeader day={day} dayIndex={dayIndex} />
+      <MapFrame path={day.mapImagePath} />
+      <Footer
+        planName={data.plan.name}
+        generatedAt={data.generatedAt}
+        alertSummary={data.alertSummary}
+      />
+    </Page>
+  );
+}
+
+export function PerDay({ data, day, dayIndex }: Props) {
+  return (
+    <Fragment>
+      <DayCoverPage day={day} dayIndex={dayIndex} />
+      <TimelinePage data={data} day={day} dayIndex={dayIndex} />
+      <EventsPage data={data} day={day} dayIndex={dayIndex} />
+      <MapPage data={data} day={day} dayIndex={dayIndex} />
+    </Fragment>
   );
 }

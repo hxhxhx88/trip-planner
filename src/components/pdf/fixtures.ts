@@ -17,7 +17,7 @@ import type {
 } from "@/lib/model/day";
 import type { PlanForEditor } from "@/lib/model/plan";
 
-const PDF_PX_PER_MIN = 0.4;
+const PDF_PX_PER_MIN = 0.6;
 
 const PHOTO_DIR = path.join(process.cwd(), "public", "places");
 

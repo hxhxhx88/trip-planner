@@ -78,11 +78,13 @@ export function buildStaticMapUrlForDay({
   events,
   travels,
   places,
+  size = { width: 800, height: 480 },
 }: {
   day: PlanForEditor["days"][number];
   events: PlanForEditor["events"];
   travels: PlanForEditor["travels"];
   places: PlanForEditor["places"];
+  size?: { width: number; height: number };
 }): string {
   const markers: StaticMapMarker[] = [];
 
@@ -137,7 +139,7 @@ export function buildStaticMapUrlForDay({
   }
 
   const url = buildStaticMapUrl({
-    size: { width: 800, height: 480 },
+    size,
     scale: 2,
     markers,
     paths,
