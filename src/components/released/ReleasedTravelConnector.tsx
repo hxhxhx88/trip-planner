@@ -2,7 +2,7 @@ import { HelpCircle } from "lucide-react";
 
 import type { DayTravel } from "@/lib/model/day";
 import { VEHICLES, type Alert, type Vehicle } from "@/lib/schemas";
-import { VEHICLE_ICON, VEHICLE_LABEL } from "@/lib/vehicles";
+import { VEHICLE_ICON, VEHICLE_LABEL, vehicleKey } from "@/lib/vehicles";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -12,8 +12,9 @@ type Props = {
 
 export function ReleasedTravelConnector({ travel, alerts }: Props) {
   const vehicle = isVehicle(travel.vehicle) ? travel.vehicle : null;
-  const Icon = vehicle ? VEHICLE_ICON[vehicle] : HelpCircle;
-  const label = vehicle ? VEHICLE_LABEL[vehicle] : "No vehicle";
+  const key = vehicleKey(vehicle, travel.transitSubtype);
+  const Icon = key ? VEHICLE_ICON[key] : HelpCircle;
+  const label = key ? VEHICLE_LABEL[key] : "No vehicle";
   const travelTime = travel.travelTime;
 
   const hasIssue = alerts.some((a) => a.severity === "issue");

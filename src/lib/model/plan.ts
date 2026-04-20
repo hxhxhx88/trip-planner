@@ -2,7 +2,7 @@ import { cacheTag } from "next/cache";
 import { and, asc, eq, inArray } from "drizzle-orm";
 
 import { db, schema } from "@/db";
-import type { PlaceHours, PlacePhoto } from "@/lib/schemas";
+import type { PlaceHours, PlacePhoto, TransitSubtype } from "@/lib/schemas";
 import { denormalizeTime } from "@/lib/time";
 
 export type PlanForEditor = {
@@ -38,6 +38,7 @@ export type PlanForEditor = {
     position: number;
     vehicle: string | null;
     travelTime: number | null;
+    transitSubtype: TransitSubtype | null;
     routePath: [number, number][] | null;
     lockedFields: string[];
     updatedAt: Date;
@@ -188,6 +189,7 @@ export async function loadPlanForEditor(
         position: t.position,
         vehicle: t.vehicle,
         travelTime: t.travelTime,
+        transitSubtype: (t.transitSubtype as TransitSubtype | null) ?? null,
         routePath: t.routePath,
         lockedFields: t.lockedFields,
         updatedAt: t.updatedAt,

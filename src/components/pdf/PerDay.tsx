@@ -9,7 +9,7 @@ import { COLORS, styles } from "@/components/pdf/styles";
 import type { BrochureData, BrochureDay } from "@/components/pdf/types";
 import type { TimelineItem } from "@/components/editor/timeline/types";
 import { minutesToHhmm } from "@/lib/time";
-import { VEHICLE_LABEL } from "@/lib/vehicles";
+import { VEHICLE_LABEL, vehicleKey } from "@/lib/vehicles";
 
 type Props = {
   data: BrochureData;
@@ -90,7 +90,8 @@ function TimelineItemView({ item }: { item: TimelineItem }) {
   }
 
   if (item.kind === "travel") {
-    const vehicleLabel = item.vehicle ? VEHICLE_LABEL[item.vehicle] : "Travel";
+    const labelKey = vehicleKey(item.vehicle, item.transitSubtype);
+    const labelText = labelKey ? VEHICLE_LABEL[labelKey] : "Travel";
     const timeLabel = formatTravel(item.travelTime);
     if (item.status === "span") {
       return (
@@ -112,7 +113,7 @@ function TimelineItemView({ item }: { item: TimelineItem }) {
             >
               <View style={styles.timelineTravelChip}>
                 <Text style={styles.timelineTravelChipText}>
-                  {vehicleLabel} · {timeLabel}
+                  {labelText} · {timeLabel}
                 </Text>
               </View>
             </View>
@@ -128,7 +129,7 @@ function TimelineItemView({ item }: { item: TimelineItem }) {
         ]}
       >
         <Text style={styles.timelineTravelChipText}>
-          {vehicleLabel} · {timeLabel}
+          {labelText} · {timeLabel}
         </Text>
       </View>
     );

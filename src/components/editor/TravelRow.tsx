@@ -10,6 +10,7 @@ import { VehicleSelect } from "@/components/editor/VehicleSelect";
 import type { DayTravel } from "@/lib/model/day";
 import type { Alert, Vehicle } from "@/lib/schemas";
 import { cn } from "@/lib/utils";
+import { VEHICLE_LABEL } from "@/lib/vehicles";
 
 type Props = {
   planId: string;
@@ -88,6 +89,11 @@ export function TravelRow({
             ? `${travel.travelTime} min`
             : "Auto Fill to compute"
           : "Pick a vehicle to estimate travel time"}
+        {travel.transitSubtype ? (
+          <span className="ml-2 rounded border bg-muted/50 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">
+            {VEHICLE_LABEL[`transit:${travel.transitSubtype}`]}
+          </span>
+        ) : null}
       </div>
       <div role="cell" className="flex items-center justify-center">
         <InlineMarker alerts={alerts} />

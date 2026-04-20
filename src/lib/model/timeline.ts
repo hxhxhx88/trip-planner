@@ -152,6 +152,7 @@ export function toTimelineModel({
     const tr = row.data;
     const vehicle = isVehicle(tr.vehicle) ? tr.vehicle : null;
     const travelTime = tr.travelTime;
+    const transitSubtype = tr.transitSubtype;
 
     const isFirst = i === firstTravelIdx;
     const isLast = i === lastTravelIdx;
@@ -181,6 +182,7 @@ export function toTimelineModel({
         top,
         height,
         vehicle,
+        transitSubtype,
         travelTime,
         status: "span",
       });
@@ -192,6 +194,7 @@ export function toTimelineModel({
         top: yOf(anchor),
         height: CHIP_HEIGHT_PX,
         vehicle,
+        transitSubtype,
         travelTime,
         status: "chip",
       });
@@ -200,6 +203,7 @@ export function toTimelineModel({
         kind: "travel",
         id: tr.id,
         vehicle,
+        transitSubtype,
         reason: "no-anchor",
       });
     }

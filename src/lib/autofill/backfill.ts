@@ -54,6 +54,7 @@ export async function backfillDay(
         .set({
           travelTime: result.value.travelTime,
           routePath: result.value.routePath,
+          transitSubtype: result.value.transitSubtype,
           updatedAt: new Date(),
         })
         .where(eq(schema.travels.id, task.travelId));

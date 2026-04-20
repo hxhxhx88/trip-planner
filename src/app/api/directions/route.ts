@@ -27,12 +27,15 @@ export async function GET(req: NextRequest): Promise<Response> {
   const vehicle = parsed.data;
 
   try {
-    const { travelTime, routePath, cached } = await getOrComputeDirections(
-      origin,
-      dest,
+    const { travelTime, routePath, transitSubtype, cached } =
+      await getOrComputeDirections(origin, dest, vehicle);
+    const result: DirectionsResult = {
+      travelTime,
+      routePath,
       vehicle,
-    );
-    const result: DirectionsResult = { travelTime, routePath, vehicle, cached };
+      transitSubtype,
+      cached,
+    };
     return Response.json(result);
   } catch (err) {
     if (err instanceof GoogleConfigError) {

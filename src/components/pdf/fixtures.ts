@@ -203,6 +203,7 @@ const tr = (
 ): DayTravel => ({
   vehicle: null,
   travelTime: null,
+  transitSubtype: null,
   routePath: null,
   lockedFields: [],
   updatedAt: now,

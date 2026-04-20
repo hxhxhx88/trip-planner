@@ -1,4 +1,4 @@
-import type { Vehicle } from "@/lib/schemas";
+import type { TransitSubtype, Vehicle } from "@/lib/schemas";
 
 export type TimelineItem =
   | {
@@ -24,6 +24,7 @@ export type TimelineItem =
       top: number;
       height: number;
       vehicle: Vehicle | null;
+      transitSubtype: TransitSubtype | null;
       travelTime: number | null;
       status: "span" | "chip";
     };
@@ -39,6 +40,7 @@ export type TimelineUnscheduled =
       kind: "travel";
       id: string;
       vehicle: Vehicle | null;
+      transitSubtype: TransitSubtype | null;
       reason: "no-anchor";
     };
 

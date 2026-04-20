@@ -1,21 +1,10 @@
 "use client";
 
-import { Bike, Bus, Car, Footprints } from "lucide-react";
-
 import { InlineMarker } from "@/components/alerts/InlineMarker";
 import type { TimelineUnscheduled } from "@/components/editor/timeline/types";
-import type { Alert, Vehicle } from "@/lib/schemas";
+import type { Alert } from "@/lib/schemas";
 import { cn } from "@/lib/utils";
-
-const VEHICLE_ICON: Record<
-  Vehicle,
-  React.ComponentType<{ className?: string }>
-> = {
-  walk: Footprints,
-  drive: Car,
-  transit: Bus,
-  cycle: Bike,
-};
+import { VEHICLE_ICON, vehicleKey } from "@/lib/vehicles";
 
 const EVENT_REASON_LABEL: Record<"no-start" | "no-duration", string> = {
   "no-start": "no start time",
@@ -77,7 +66,8 @@ export function UnscheduledPill({
               </li>
             );
           }
-          const Icon = item.vehicle ? VEHICLE_ICON[item.vehicle] : null;
+          const key = vehicleKey(item.vehicle, item.transitSubtype);
+          const Icon = key ? VEHICLE_ICON[key] : null;
           return (
             <li key={item.id}>
               <button

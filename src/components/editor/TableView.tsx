@@ -61,6 +61,7 @@ function blankTravel(id: string, dayId: string, position: number): DayTravel {
     position,
     vehicle: null,
     travelTime: null,
+    transitSubtype: null,
     routePath: null,
     lockedFields: [],
     updatedAt: new Date(0),

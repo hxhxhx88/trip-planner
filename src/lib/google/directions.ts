@@ -1,13 +1,18 @@
 import { and, eq, sql } from "drizzle-orm";
 
 import { db, schema } from "@/db";
-import type { Vehicle } from "@/lib/schemas";
+import type { TransitSubtype, Vehicle } from "@/lib/schemas";
 import { roundUpToQuarter } from "@/lib/time";
 
 import { GoogleConfigError, GoogleUpstreamError } from "./places";
 
 const ROUTES_URL = "https://routes.googleapis.com/directions/v2:computeRoutes";
-const FIELD_MASK = "routes.duration,routes.polyline.encodedPolyline";
+const FIELD_MASK = [
+  "routes.duration",
+  "routes.polyline.encodedPolyline",
+  "routes.legs.steps.travelMode",
+  "routes.legs.steps.transitDetails.transitLine.vehicle.type",
+].join(",");
 
 const VEHICLE_TO_TRAVEL_MODE: Record<Vehicle, string> = {
   walk: "WALK",
@@ -15,6 +20,26 @@ const VEHICLE_TO_TRAVEL_MODE: Record<Vehicle, string> = {
   transit: "TRANSIT",
   cycle: "BICYCLE",
 };
+
+const RAIL_VEHICLE_TYPES: ReadonlySet<string> = new Set([
+  "SUBWAY",
+  "METRO_RAIL",
+  "HEAVY_RAIL",
+  "MONORAIL",
+  "LIGHT_RAIL",
+  "TRAM",
+  "COMMUTER_TRAIN",
+  "HIGH_SPEED_TRAIN",
+  "LONG_DISTANCE_TRAIN",
+  "RAIL",
+]);
+
+const BUS_VEHICLE_TYPES: ReadonlySet<string> = new Set([
+  "BUS",
+  "TROLLEYBUS",
+  "INTERCITY_BUS",
+  "SHARE_TAXI",
+]);
 
 export class NoRouteError extends Error {
   constructor() {
@@ -26,7 +51,42 @@ export async function computeRoute(
   origin: string,
   dest: string,
   vehicle: Vehicle,
-): Promise<{ travelTimeMinutes: number; routePath: [number, number][] }> {
+): Promise<{
+  travelTimeMinutes: number;
+  routePath: [number, number][];
+  transitSubtype: TransitSubtype | null;
+}> {
+  const base = {
+    origin: { placeId: origin },
+    destination: { placeId: dest },
+    travelMode: VEHICLE_TO_TRAVEL_MODE[vehicle],
+  };
+
+  let route: RawRoute | null = null;
+  if (vehicle === "transit") {
+    route = await fetchRoute({
+      ...base,
+      transitPreferences: { allowedTravelModes: ["RAIL"] },
+    });
+  }
+  if (!isUsableRoute(route)) {
+    route = await fetchRoute(base);
+  }
+  if (!isUsableRoute(route)) throw new NoRouteError();
+
+  const seconds = Number.parseFloat(route.duration);
+  if (!Number.isFinite(seconds)) throw new NoRouteError();
+
+  return {
+    travelTimeMinutes: Math.ceil(seconds / 60),
+    routePath: decodePolyline(route.polyline.encodedPolyline),
+    transitSubtype: vehicle === "transit" ? classifyTransitRoute(route) : null,
+  };
+}
+
+async function fetchRoute(
+  body: Record<string, unknown>,
+): Promise<RawRoute | null> {
   const key = process.env.GOOGLE_MAPS_API_KEY;
   if (!key) throw new GoogleConfigError("GOOGLE_MAPS_API_KEY is not set");
 
@@ -37,31 +97,26 @@ export async function computeRoute(
       "Content-Type": "application/json",
       "X-Goog-FieldMask": FIELD_MASK,
     },
-    body: JSON.stringify({
-      origin: { placeId: origin },
-      destination: { placeId: dest },
-      travelMode: VEHICLE_TO_TRAVEL_MODE[vehicle],
-    }),
+    body: JSON.stringify(body),
   });
 
   if (!res.ok) {
-    const body = await res.text();
-    console.error("google routes error", res.status, body.slice(0, 400));
+    const text = await res.text();
+    console.error("google routes error", res.status, text.slice(0, 400));
     throw new GoogleUpstreamError(res.status);
   }
 
   const json = (await res.json()) as RawComputeRoutesResponse;
-  const route = json.routes?.[0];
-  const encoded = route?.polyline?.encodedPolyline;
-  if (!route?.duration || !encoded) throw new NoRouteError();
+  return json.routes?.[0] ?? null;
+}
 
-  const seconds = Number.parseFloat(route.duration);
-  if (!Number.isFinite(seconds)) throw new NoRouteError();
-
-  return {
-    travelTimeMinutes: Math.ceil(seconds / 60),
-    routePath: decodePolyline(encoded),
-  };
+function isUsableRoute(
+  r: RawRoute | null,
+): r is RawRoute & {
+  duration: string;
+  polyline: { encodedPolyline: string };
+} {
+  return !!r?.duration && !!r.polyline?.encodedPolyline;
 }
 
 export async function getOrComputeDirections(
@@ -71,6 +126,7 @@ export async function getOrComputeDirections(
 ): Promise<{
   travelTime: number;
   routePath: [number, number][];
+  transitSubtype: TransitSubtype | null;
   cached: boolean;
 }> {
   const [cachedRow] = await db
@@ -90,11 +146,12 @@ export async function getOrComputeDirections(
     return {
       travelTime: cachedRow.travelTime,
       routePath: cachedRow.routePath,
+      transitSubtype: (cachedRow.transitSubtype as TransitSubtype | null) ?? null,
       cached: true,
     };
   }
 
-  const { travelTimeMinutes, routePath } = await computeRoute(
+  const { travelTimeMinutes, routePath, transitSubtype } = await computeRoute(
     origin,
     dest,
     vehicle,
@@ -108,6 +165,7 @@ export async function getOrComputeDirections(
       destPlaceId: dest,
       vehicle,
       travelTime,
+      transitSubtype,
       routePath,
       fetchedAt: new Date(),
     })
@@ -119,12 +177,39 @@ export async function getOrComputeDirections(
       ],
       set: {
         travelTime: sql`excluded.travel_time`,
+        transitSubtype: sql`excluded.transit_subtype`,
         routePath: sql`excluded.route_path`,
         fetchedAt: sql`excluded.fetched_at`,
       },
     });
 
-  return { travelTime, routePath, cached: false };
+  return { travelTime, routePath, transitSubtype, cached: false };
+}
+
+function classifyTransitRoute(route: RawRoute): TransitSubtype | null {
+  const types = new Set<string>();
+  for (const leg of route.legs ?? []) {
+    for (const step of leg.steps ?? []) {
+      if (step.travelMode !== "TRANSIT") continue;
+      const t = step.transitDetails?.transitLine?.vehicle?.type;
+      if (t) types.add(t);
+    }
+  }
+  if (types.size === 0) return null;
+
+  let hasRail = false;
+  let hasBus = false;
+  let hasOther = false;
+  for (const t of types) {
+    if (RAIL_VEHICLE_TYPES.has(t)) hasRail = true;
+    else if (BUS_VEHICLE_TYPES.has(t)) hasBus = true;
+    else hasOther = true;
+  }
+  if (hasOther) return "connected";
+  if (hasRail && hasBus) return "connected";
+  if (hasRail) return "subway";
+  if (hasBus) return "bus";
+  return "connected";
 }
 
 export function decodePolyline(str: string): [number, number][] {
@@ -161,9 +246,21 @@ export function decodePolyline(str: string): [number, number][] {
   return out;
 }
 
-type RawComputeRoutesResponse = {
-  routes?: {
-    duration?: string;
-    polyline?: { encodedPolyline?: string };
+type RawRoute = {
+  duration?: string;
+  polyline?: { encodedPolyline?: string };
+  legs?: {
+    steps?: {
+      travelMode?: string;
+      transitDetails?: {
+        transitLine?: {
+          vehicle?: { type?: string };
+        };
+      };
+    }[];
   }[];
+};
+
+type RawComputeRoutesResponse = {
+  routes?: RawRoute[];
 };

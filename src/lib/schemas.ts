@@ -4,6 +4,10 @@ export const VEHICLES = ["walk", "drive", "transit", "cycle"] as const;
 export type Vehicle = (typeof VEHICLES)[number];
 export const VehicleSchema = z.enum(VEHICLES);
 
+export const TRANSIT_SUBTYPES = ["subway", "bus", "connected"] as const;
+export type TransitSubtype = (typeof TRANSIT_SUBTYPES)[number];
+export const TransitSubtypeSchema = z.enum(TRANSIT_SUBTYPES);
+
 export const TimeHHMMSchema = z
   .string()
   .regex(/^([01]\d|2[0-3]):(00|15|30|45)$/, "Time must be HH:MM at 15-minute granularity");

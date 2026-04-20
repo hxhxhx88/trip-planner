@@ -1,21 +1,10 @@
 "use client";
 
-import { Bike, Bus, Car, Footprints } from "lucide-react";
-
 import { InlineMarker } from "@/components/alerts/InlineMarker";
 import type { TimelineItem } from "@/components/editor/timeline/types";
-import type { Alert, Vehicle } from "@/lib/schemas";
+import type { Alert } from "@/lib/schemas";
 import { cn } from "@/lib/utils";
-
-const VEHICLE_ICON: Record<
-  Vehicle,
-  React.ComponentType<{ className?: string }>
-> = {
-  walk: Footprints,
-  drive: Car,
-  transit: Bus,
-  cycle: Bike,
-};
+import { VEHICLE_ICON, vehicleKey } from "@/lib/vehicles";
 
 type Props = {
   item: Extract<TimelineItem, { kind: "travel" }>;
@@ -34,7 +23,8 @@ export function TravelConnector({
   registerRef,
   alerts,
 }: Props) {
-  const Icon = item.vehicle ? VEHICLE_ICON[item.vehicle] : null;
+  const key = vehicleKey(item.vehicle, item.transitSubtype);
+  const Icon = key ? VEHICLE_ICON[key] : null;
   const hasTime = item.travelTime != null;
   const label = hasTime ? `${item.travelTime} min` : "travel time TBD";
 

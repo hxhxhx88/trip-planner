@@ -37,6 +37,7 @@ export async function updateTravel(
     dbPatch.vehicle = patch.vehicle ?? null;
     dbPatch.travelTime = null;
     dbPatch.routePath = null;
+    dbPatch.transitSubtype = null;
   }
 
   const outcome = await db.transaction(async (tx) => {

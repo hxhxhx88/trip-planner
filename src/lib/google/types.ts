@@ -1,4 +1,4 @@
-import type { PlaceHours, Vehicle } from "@/lib/schemas";
+import type { PlaceHours, TransitSubtype, Vehicle } from "@/lib/schemas";
 
 export type AutocompleteHit = {
   placeId: string;
@@ -21,5 +21,6 @@ export type DirectionsResult = {
   travelTime: number;
   routePath: [number, number][];
   vehicle: Vehicle;
+  transitSubtype: TransitSubtype | null;
   cached: boolean;
 };
