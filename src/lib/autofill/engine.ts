@@ -104,16 +104,10 @@ async function persistEventUpdates(
     if (!existing) continue;
 
     const patch: Partial<typeof schema.events.$inferInsert> = {};
-    if (
-      update.startTime != null &&
-      !existing.lockedFields.includes("startTime")
-    ) {
+    if (update.startTime != null) {
       patch.startTime = normalizeTime(update.startTime);
     }
-    if (
-      update.stayDuration != null &&
-      !existing.lockedFields.includes("stayDuration")
-    ) {
+    if (update.stayDuration != null) {
       patch.stayDuration = update.stayDuration;
     }
     if (

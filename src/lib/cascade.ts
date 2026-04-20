@@ -55,7 +55,7 @@ export function cascade(day: ResolvedDay): CascadeResult {
       }
     }
 
-    if (event.startTime == null && !event.lockedFields.includes("startTime")) {
+    if (event.startTime == null) {
       const resolved = resolveCandidates(startCandidates);
       if (resolved.kind === "single") {
         update.startTime = minutesToHhmm(resolved.value);
@@ -70,10 +70,7 @@ export function cascade(day: ResolvedDay): CascadeResult {
       }
     }
 
-    if (
-      event.stayDuration == null &&
-      !event.lockedFields.includes("stayDuration")
-    ) {
+    if (event.stayDuration == null) {
       const resolved = resolveCandidates(durCandidates);
       if (resolved.kind === "single") {
         update.stayDuration = resolved.value;
@@ -126,7 +123,7 @@ function runForward(
     let derivedStart: number | undefined;
     if (propagatedEnd != null && t?.travelTime != null) {
       derivedStart = propagatedEnd + t.travelTime;
-      if (cur.startTime == null && !cur.lockedFields.includes("startTime")) {
+      if (cur.startTime == null) {
         ensure(out, cur.id).startTime = derivedStart;
       }
     }
@@ -172,18 +169,10 @@ function runBackward(
       const derivedEnd = pulledStart - t.travelTime;
       ensure(out, cur.id).endTime = derivedEnd;
 
-      if (
-        cur.startTime != null &&
-        cur.stayDuration == null &&
-        !cur.lockedFields.includes("stayDuration")
-      ) {
+      if (cur.startTime != null && cur.stayDuration == null) {
         const dur = derivedEnd - hhmmToMinutes(cur.startTime);
         if (dur >= 0) ensure(out, cur.id).stayDuration = dur;
-      } else if (
-        cur.startTime == null &&
-        cur.stayDuration != null &&
-        !cur.lockedFields.includes("startTime")
-      ) {
+      } else if (cur.startTime == null && cur.stayDuration != null) {
         derivedStart = derivedEnd - cur.stayDuration;
         ensure(out, cur.id).startTime = derivedStart;
       }

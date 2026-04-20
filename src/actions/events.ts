@@ -144,12 +144,15 @@ export async function updateEvent(
 
     const merged =
       current.updatedAt.getTime() !== expectedUpdatedAt.getTime();
-    const keys = Object.keys(patch);
-    const locked = Array.from(new Set([...current.lockedFields, ...keys]));
+    const locked = new Set(current.lockedFields);
+    for (const [key, value] of Object.entries(patch)) {
+      if (value == null) locked.delete(key);
+      else locked.add(key);
+    }
 
     const [updated] = await tx
       .update(schema.events)
-      .set({ ...dbPatch, lockedFields: locked, updatedAt: new Date() })
+      .set({ ...dbPatch, lockedFields: Array.from(locked), updatedAt: new Date() })
       .where(eq(schema.events.id, id))
       .returning({ updatedAt: schema.events.updatedAt });
 
