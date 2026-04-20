@@ -13,6 +13,7 @@ import { toast } from "sonner";
 
 import { updateEvent } from "@/actions/events";
 import { InlineMarker } from "@/components/alerts/InlineMarker";
+import { StayDurationChat } from "@/components/editor/StayDurationChat";
 import { PlacePicker } from "@/components/places/PlacePicker";
 import { Button } from "@/components/ui/button";
 import {
@@ -225,7 +226,7 @@ export function EventRow({
       )}
       style={{
         gridTemplateColumns:
-          "64px 64px minmax(180px,1.2fr) minmax(180px,1.5fr) minmax(160px,1fr) 24px 72px",
+          "64px 64px 28px minmax(180px,1.2fr) minmax(180px,1.5fr) minmax(160px,1fr) 24px 72px",
       }}
     >
       <div role="cell" className="relative">
@@ -268,6 +269,20 @@ export function EventRow({
           className="h-8 px-2 text-sm tabular-nums"
         />
         {savingField === "duration" ? <SavingDot /> : null}
+      </div>
+
+      <div role="cell" className="flex items-center justify-center">
+        <StayDurationChat
+          place={
+            place
+              ? {
+                  name: place.name,
+                  address: place.address,
+                  category: place.category,
+                }
+              : null
+          }
+        />
       </div>
 
       <div role="cell" className="relative">
