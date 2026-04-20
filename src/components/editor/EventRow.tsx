@@ -27,7 +27,7 @@ import { useDebouncedCallback } from "@/lib/hooks";
 import type { DayEvent } from "@/lib/model/day";
 import type { PlanForEditor } from "@/lib/model/plan";
 import type { Alert } from "@/lib/schemas";
-import { minutesToHhmm, roundToQuarter } from "@/lib/time";
+import { hhmmToMinutes, minutesToHhmm, parseFlexibleHhmm, roundToQuarter } from "@/lib/time";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -47,19 +47,14 @@ type Props = {
   alerts: Alert[];
 };
 
-// CANONICAL HH:MM rule: accept ^(\d{1,2}):(\d{2})$ where h ≤ 23 and m ≤ 59.
-// Single-digit hours OK (e.g. "9:30"); minutes must be two digits. Rounded to
-// the nearest 15-min boundary on commit. Anything else rolls back to the last
-// committed value.
+// Accepts "10:00", "9:30", "1000", "930", "0930". Rounded to the nearest
+// 15-min boundary on commit. Anything else rolls back to the last committed
+// value.
 function parseAndRoundTime(raw: string): string | null {
-  const trimmed = raw.trim();
-  if (trimmed === "") return null;
-  const m = /^(\d{1,2}):(\d{2})$/.exec(trimmed);
-  if (!m) return "INVALID";
-  const h = Number(m[1]);
-  const min = Number(m[2]);
-  if (h > 23 || min > 59) return "INVALID";
-  return minutesToHhmm(roundToQuarter(h * 60 + min));
+  if (raw.trim() === "") return null;
+  const parsed = parseFlexibleHhmm(raw);
+  if (!parsed) return "INVALID";
+  return minutesToHhmm(roundToQuarter(hhmmToMinutes(parsed)));
 }
 
 function parseAndRoundDuration(raw: string): number | null | "INVALID" {
@@ -277,6 +272,7 @@ export function EventRow({
 
       <div role="cell" className="relative">
         <PlacePicker
+          planId={planId}
           open={pickerOpen}
           onOpenChange={setPickerOpen}
           onCommit={onPlaceCommit}
@@ -289,14 +285,7 @@ export function EventRow({
               <MapPin className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
               <span className="min-w-0 flex-1">
                 {place ? (
-                  <>
-                    <span className="block truncate">{place.name}</span>
-                    {place.address ? (
-                      <span className="block truncate text-xs text-muted-foreground">
-                        {place.address}
-                      </span>
-                    ) : null}
-                  </>
+                  <span className="block truncate">{place.name}</span>
                 ) : (
                   <span className="text-muted-foreground">Pick a place…</span>
                 )}

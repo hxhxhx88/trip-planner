@@ -1,5 +1,5 @@
 import { cacheTag } from "next/cache";
-import { desc, eq, sql } from "drizzle-orm";
+import { asc, desc, eq, sql } from "drizzle-orm";
 
 import { db, schema } from "@/db";
 
@@ -47,4 +47,38 @@ export async function getPlan(id: string): Promise<PlanRow | null> {
     .where(eq(schema.plans.id, id))
     .limit(1);
   return row ?? null;
+}
+
+export type PlanSearchContext = {
+  language: string;
+  bias: { lat: number; lng: number } | null;
+};
+
+export async function getPlanSearchContext(
+  planId: string,
+): Promise<PlanSearchContext | null> {
+  const [plan] = await db
+    .select({ id: schema.plans.id, language: schema.plans.language })
+    .from(schema.plans)
+    .where(eq(schema.plans.id, planId))
+    .limit(1);
+  if (!plan) return null;
+
+  const [lodging] = await db
+    .select({ lat: schema.places.lat, lng: schema.places.lng })
+    .from(schema.days)
+    .innerJoin(
+      schema.places,
+      eq(schema.places.googlePlaceId, schema.days.startLodgingPlaceId),
+    )
+    .where(eq(schema.days.planId, planId))
+    .orderBy(asc(schema.days.position))
+    .limit(1);
+
+  const bias =
+    lodging && lodging.lat != null && lodging.lng != null
+      ? { lat: lodging.lat, lng: lodging.lng }
+      : null;
+
+  return { language: plan.language, bias };
 }

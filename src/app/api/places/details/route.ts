@@ -7,15 +7,25 @@ import {
   PlaceNotFoundError,
 } from "@/lib/google/places";
 import { ensurePhoto } from "@/lib/places/photos";
+import { getPlanSearchContext } from "@/lib/model/plans";
 
 export async function GET(req: NextRequest): Promise<Response> {
   const placeId = req.nextUrl.searchParams.get("placeId");
+  const planId = req.nextUrl.searchParams.get("planId");
   if (!placeId) {
     return Response.json({ error: "placeId required" }, { status: 400 });
   }
 
+  const opts: { languageCode?: string } = {};
+  if (planId) {
+    const ctx = await getPlanSearchContext(planId);
+    if (ctx && ctx.language && ctx.language !== "en") {
+      opts.languageCode = ctx.language;
+    }
+  }
+
   try {
-    const details = await getOrFetchPlaceDetails(placeId);
+    const details = await getOrFetchPlaceDetails(placeId, opts);
     if (details.photos.length > 0) {
       after(() => ensurePhoto(placeId, 0));
     }

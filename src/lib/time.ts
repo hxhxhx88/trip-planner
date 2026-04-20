@@ -15,6 +15,28 @@ export function hhmmToMinutes(hhmm: string): number {
   return h * 60 + m;
 }
 
+// Accept "10:00", "9:30", "1000", "930", "0930" → "10:00", "09:30", "10:00",
+// "09:30", "09:30". Returns null if unparseable or out of range.
+export function parseFlexibleHhmm(raw: string): string | null {
+  const t = raw.trim();
+  let h: number;
+  let m: number;
+  const colon = /^(\d{1,2}):(\d{2})$/.exec(t);
+  const compact = /^(\d{3,4})$/.exec(t);
+  if (colon) {
+    h = Number(colon[1]);
+    m = Number(colon[2]);
+  } else if (compact) {
+    const s = compact[1].padStart(4, "0");
+    h = Number(s.slice(0, 2));
+    m = Number(s.slice(2));
+  } else {
+    return null;
+  }
+  if (h > 23 || m > 59) return null;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
 export function minutesToHhmm(minutes: number): string {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;

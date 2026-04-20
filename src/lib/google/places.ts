@@ -28,15 +28,37 @@ function requireKey(): string {
   return key;
 }
 
-export async function autocomplete(q: string, sessionToken: string): Promise<AutocompleteHit[]> {
+export type AutocompleteOptions = {
+  languageCode?: string;
+  locationBias?: { lat: number; lng: number; radiusMeters: number };
+};
+
+export async function autocomplete(
+  q: string,
+  sessionToken: string,
+  opts: AutocompleteOptions = {},
+): Promise<AutocompleteHit[]> {
   const key = requireKey();
+  const body: Record<string, unknown> = { input: q, sessionToken };
+  if (opts.languageCode) body.languageCode = opts.languageCode;
+  if (opts.locationBias) {
+    body.locationBias = {
+      circle: {
+        center: {
+          latitude: opts.locationBias.lat,
+          longitude: opts.locationBias.lng,
+        },
+        radius: opts.locationBias.radiusMeters,
+      },
+    };
+  }
   const res = await fetch(`${PLACES_BASE}/places:autocomplete`, {
     method: "POST",
     headers: {
       "X-Goog-Api-Key": key,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ input: q, sessionToken }),
+    body: JSON.stringify(body),
   });
 
   if (!res.ok) {
@@ -59,9 +81,14 @@ export async function autocomplete(q: string, sessionToken: string): Promise<Aut
 
 export async function fetchPlaceDetails(
   placeId: string,
+  opts: { languageCode?: string } = {},
 ): Promise<{ details: PlaceDetails; raw: unknown }> {
   const key = requireKey();
-  const res = await fetch(`${PLACES_BASE}/places/${encodeURIComponent(placeId)}`, {
+  const url = new URL(
+    `${PLACES_BASE}/places/${encodeURIComponent(placeId)}`,
+  );
+  if (opts.languageCode) url.searchParams.set("languageCode", opts.languageCode);
+  const res = await fetch(url, {
     headers: {
       "X-Goog-Api-Key": key,
       "X-Goog-FieldMask": DETAILS_FIELD_MASK,
@@ -99,19 +126,23 @@ export async function fetchPlaceDetails(
 
 export async function getOrFetchPlaceDetails(
   placeId: string,
+  opts: { languageCode?: string } = {},
 ): Promise<PlaceDetails> {
+  const wantedLang = opts.languageCode ?? "en";
   const [existing] = await db
     .select()
     .from(schema.places)
     .where(eq(schema.places.googlePlaceId, placeId))
     .limit(1);
 
-  if (existing && Date.now() - existing.fetchedAt.getTime() < PLACE_CACHE_TTL_MS) {
-    console.log(`[places/details] cache hit ${placeId}`);
+  const fresh =
+    existing && Date.now() - existing.fetchedAt.getTime() < PLACE_CACHE_TTL_MS;
+  if (existing && fresh && existing.languageCode === wantedLang) {
+    console.log(`[places/details] cache hit ${placeId} (${wantedLang})`);
     return rowToDetails(existing);
   }
 
-  const { details, raw } = await fetchPlaceDetails(placeId);
+  const { details, raw } = await fetchPlaceDetails(placeId, opts);
 
   await db
     .insert(schema.places)
@@ -124,14 +155,20 @@ export async function getOrFetchPlaceDetails(
       photos: details.photos,
       hours: details.hours,
       category: details.category,
+      languageCode: wantedLang,
       fetchedAt: new Date(),
     })
     .onConflictDoUpdate({
       target: schema.places.googlePlaceId,
       set: {
+        name: sql`excluded.name`,
+        address: sql`excluded.address`,
+        lat: sql`excluded.lat`,
+        lng: sql`excluded.lng`,
         photos: sql`excluded.photos`,
         hours: sql`excluded.hours`,
         category: sql`excluded.category`,
+        languageCode: sql`excluded.language_code`,
         fetchedAt: sql`excluded.fetched_at`,
       },
     });

@@ -10,6 +10,7 @@ export type PlanForEditor = {
     id: string;
     name: string;
     timezone: string;
+    language: string;
     releasedSlug: string | null;
   };
   days: Array<{
@@ -153,6 +154,7 @@ export async function loadPlanForEditor(
       id: plan.id,
       name: plan.name,
       timezone: plan.timezone,
+      language: plan.language,
       releasedSlug: plan.releasedSlug,
     },
     days: days.map((d) => ({

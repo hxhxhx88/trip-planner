@@ -120,6 +120,7 @@ export function LodgingFilled({ planId, dayId, slot, place }: Props) {
       />
 
       <PlacePicker
+        planId={planId}
         open={pickerOpen}
         onOpenChange={setPickerOpen}
         onCommit={change}

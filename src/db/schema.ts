@@ -18,6 +18,7 @@ export const plans = pgTable("plans", {
   name: text("name").notNull(),
   timezone: text("timezone").notNull(),
   tzSetByUser: boolean("tz_set_by_user").default(false).notNull(),
+  language: text("language").default("en").notNull(),
   releasedSlug: text("released_slug").unique(),
   dirtySince: timestamp("dirty_since", { withTimezone: true }).defaultNow(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
@@ -33,6 +34,7 @@ export const places = pgTable("places", {
   photos: jsonb("photos").$type<PlacePhoto[]>().default([]).notNull(),
   hours: jsonb("hours").$type<PlaceHours | null>(),
   category: text("category"),
+  languageCode: text("language_code").default("en").notNull(),
   fetchedAt: timestamp("fetched_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

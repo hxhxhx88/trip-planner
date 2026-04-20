@@ -4,7 +4,7 @@ import { useMemo, useState, useSyncExternalStore, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { createPlan } from "@/actions/plans";
+import { createPlan, type PlanLanguage } from "@/actions/plans";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -39,6 +39,7 @@ export function NewPlanDialog({ open, onOpenChange }: Props) {
   const browserTz = useSyncExternalStore(subscribe, getBrowserTz, getServerTz);
   const [name, setName] = useState("");
   const [userTz, setUserTz] = useState<string | null>(null);
+  const [language, setLanguage] = useState<PlanLanguage>("en");
   const timezone = userTz ?? browserTz;
   const [isPending, startTransition] = useTransition();
 
@@ -58,6 +59,7 @@ export function NewPlanDialog({ open, onOpenChange }: Props) {
         name: trimmed,
         timezone,
         tzSetByUser: userTz !== null,
+        language,
       });
       if (!res.ok) {
         toast.error(res.error.message);
@@ -66,6 +68,7 @@ export function NewPlanDialog({ open, onOpenChange }: Props) {
       toast.success("Plan created");
       setName("");
       setUserTz(null);
+      setLanguage("en");
       onOpenChange(false);
       router.replace(`/plans/${res.data.id}/edit`);
     });
@@ -78,7 +81,7 @@ export function NewPlanDialog({ open, onOpenChange }: Props) {
           <DialogHeader>
             <DialogTitle>New plan</DialogTitle>
             <DialogDescription>
-              Name your trip and pick the time zone it lives in.
+              Name your trip, then pick its time zone and language.
             </DialogDescription>
           </DialogHeader>
 
@@ -109,6 +112,27 @@ export function NewPlanDialog({ open, onOpenChange }: Props) {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="plan-lang">Language</Label>
+            <Select
+              value={language}
+              onValueChange={(v) => {
+                if (v === "en" || v === "zh-TW") setLanguage(v);
+              }}
+            >
+              <SelectTrigger id="plan-lang" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="en">English</SelectItem>
+                <SelectItem value="zh-TW">繁體中文 (Traditional Chinese)</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Used for Google place names, addresses, and categories.
+            </p>
           </div>
 
           <DialogFooter>

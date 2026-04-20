@@ -12,21 +12,30 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import type { AutocompleteHit, PlaceDetails } from "@/lib/google/types";
+import { usePreview } from "@/stores/preview";
 
 type Props = {
+  planId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCommit: (details: PlaceDetails) => Promise<void> | void;
   trigger?: React.ReactElement;
 };
 
-export function PlacePicker({ open, onOpenChange, onCommit, trigger }: Props) {
+export function PlacePicker({
+  planId,
+  open,
+  onOpenChange,
+  onCommit,
+  trigger,
+}: Props) {
   return (
     <Popover open={open} onOpenChange={onOpenChange}>
       {trigger ? <PopoverTrigger render={trigger} /> : null}
       <PopoverContent className="w-96" align="start">
         {open ? (
           <PickerBody
+            planId={planId}
             onCommit={onCommit}
             onClose={() => onOpenChange(false)}
           />
@@ -42,9 +51,11 @@ type Mode =
   | { kind: "preview"; details: PlaceDetails };
 
 function PickerBody({
+  planId,
   onCommit,
   onClose,
 }: {
+  planId: string;
   onCommit: (details: PlaceDetails) => Promise<void> | void;
   onClose: () => void;
 }) {
@@ -65,7 +76,7 @@ function PickerBody({
       abortRef.current?.abort();
       const ac = new AbortController();
       abortRef.current = ac;
-      const params = new URLSearchParams({ q: trimmed, sessionToken });
+      const params = new URLSearchParams({ q: trimmed, sessionToken, planId });
       fetch(`/api/places/autocomplete?${params}`, { signal: ac.signal })
         .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
         .then((data: AutocompleteHit[]) => {
@@ -80,34 +91,49 @@ function PickerBody({
       clearTimeout(handle);
       abortRef.current?.abort();
     };
-  }, [trimmed, mode.kind, sessionToken]);
+  }, [trimmed, mode.kind, sessionToken, planId]);
 
   const visibleHits = trimmed ? hits : [];
 
-  const pickHit = useCallback((hit: AutocompleteHit) => {
-    setMode({ kind: "loading", placeId: hit.placeId });
-    const params = new URLSearchParams({ placeId: hit.placeId });
-    fetch(`/api/places/details?${params}`)
-      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
-      .then((details: PlaceDetails) => {
-        setMode({ kind: "preview", details });
-      })
-      .catch((e) => {
-        console.error("place details failed", e);
-        setMode({ kind: "search" });
-      });
-  }, []);
+  const pickHit = useCallback(
+    (hit: AutocompleteHit) => {
+      setMode({ kind: "loading", placeId: hit.placeId });
+      const params = new URLSearchParams({ placeId: hit.placeId, planId });
+      fetch(`/api/places/details?${params}`)
+        .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+        .then((details: PlaceDetails) => {
+          setMode({ kind: "preview", details });
+          usePreview.getState().set({
+            placeId: details.googlePlaceId,
+            lat: details.lat,
+            lng: details.lng,
+            name: details.name,
+          });
+        })
+        .catch((e) => {
+          console.error("place details failed", e);
+          setMode({ kind: "search" });
+        });
+    },
+    [planId],
+  );
 
   const commit = useCallback(async () => {
     if (mode.kind !== "preview") return;
     setCommitting(true);
     try {
       await onCommit(mode.details);
+      usePreview.getState().set(null);
       onClose();
     } finally {
       setCommitting(false);
     }
   }, [mode, onCommit, onClose]);
+
+  // Clear preview when picker body unmounts (popover closes, Back, etc.)
+  useEffect(() => {
+    return () => usePreview.getState().set(null);
+  }, []);
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (mode.kind !== "search" || visibleHits.length === 0) return;
@@ -147,7 +173,10 @@ function PickerBody({
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => setMode({ kind: "search" })}
+            onClick={() => {
+              usePreview.getState().set(null);
+              setMode({ kind: "search" });
+            }}
             disabled={committing}
           >
             Back

@@ -52,6 +52,7 @@ export function LodgingEmpty({
   return (
     <div className="space-y-1">
       <PlacePicker
+        planId={planId}
         open={pickerOpen}
         onOpenChange={setPickerOpen}
         onCommit={commit}

@@ -1,0 +1,1 @@
+ALTER TABLE "places" ADD COLUMN "language_code" text DEFAULT 'en' NOT NULL;

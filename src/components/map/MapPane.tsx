@@ -7,10 +7,11 @@ import { Map, useMap } from "@vis.gl/react-google-maps";
 
 import type { PlanForEditor } from "@/lib/model/plan";
 import { toMapDay } from "@/lib/model/map";
+import { usePreview, type PreviewPlace } from "@/stores/preview";
 import { useSelection } from "@/stores/selection";
 
 import { DaySelector } from "./DaySelector";
-import { EventPin, LodgingPin } from "./Pin";
+import { EventPin, LodgingPin, PreviewPin } from "./Pin";
 import { Polyline } from "./Polyline";
 import type { MapDay } from "./types";
 
@@ -25,6 +26,7 @@ export function MapPane({ data }: Props) {
   const hoveredId = useSelection((s) => s.hoveredId);
   const select = useSelection((s) => s.select);
   const hover = useSelection((s) => s.hover);
+  const preview = usePreview((s) => s.place);
 
   const days = data.days;
   const resolvedDayId =
@@ -48,10 +50,11 @@ export function MapPane({ data }: Props) {
   }
 
   const hasPoints = mapDayHasPoints(mapDay);
+  const showMap = hasPoints || preview !== null;
 
   return (
     <PaneShell headerLabel={headerLabel} days={days}>
-      {hasPoints && mapDay ? (
+      {showMap ? (
         <div className="flex-1">
           <Map
             mapId={mapId}
@@ -62,7 +65,7 @@ export function MapPane({ data }: Props) {
             onClick={() => select(null, "map")}
             style={{ width: "100%", height: "100%" }}
           >
-            {mapDay.startLodging && (
+            {mapDay?.startLodging && (
               <LodgingPin
                 position={{
                   lat: mapDay.startLodging.lat,
@@ -77,7 +80,7 @@ export function MapPane({ data }: Props) {
                 }
               />
             )}
-            {mapDay.endLodging && (
+            {mapDay?.endLodging && (
               <LodgingPin
                 position={{
                   lat: mapDay.endLodging.lat,
@@ -90,7 +93,7 @@ export function MapPane({ data }: Props) {
                 onHover={(h) => hover(h ? mapDay.endLodging!.id : null)}
               />
             )}
-            {mapDay.events.map((e) => (
+            {mapDay?.events.map((e) => (
               <EventPin
                 key={e.id}
                 position={{ lat: e.lat, lng: e.lng }}
@@ -102,7 +105,7 @@ export function MapPane({ data }: Props) {
                 onHover={(h) => hover(h ? e.id : null)}
               />
             ))}
-            {mapDay.travels.map((t) => (
+            {mapDay?.travels.map((t) => (
               <Polyline
                 key={t.id}
                 vehicle={t.vehicle}
@@ -113,8 +116,15 @@ export function MapPane({ data }: Props) {
                 onHover={(h) => hover(h ? t.id : null)}
               />
             ))}
-            <FitBounds mapDay={mapDay} />
-            <PanToSelected mapDay={mapDay} />
+            {preview && (
+              <PreviewPin
+                position={{ lat: preview.lat, lng: preview.lng }}
+                name={preview.name}
+              />
+            )}
+            {mapDay && !preview && <FitBounds mapDay={mapDay} />}
+            {mapDay && !preview && <PanToSelected mapDay={mapDay} />}
+            {preview && <PanToPreview preview={preview} />}
           </Map>
         </div>
       ) : (
@@ -218,6 +228,16 @@ function FitBounds({ mapDay }: { mapDay: MapDay }) {
     map.fitBounds(bounds, 32);
   }, [map, mapDay]);
 
+  return null;
+}
+
+function PanToPreview({ preview }: { preview: PreviewPlace }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!map) return;
+    map.panTo({ lat: preview.lat, lng: preview.lng });
+    map.setZoom(16);
+  }, [map, preview.lat, preview.lng]);
   return null;
 }
 

@@ -22,6 +22,20 @@
       "when": 1776604715340,
       "tag": "0002_young_roughhouse",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1776657809320,
+      "tag": "0003_tiny_caretaker",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1776660785657,
+      "tag": "0004_condemned_morg",
+      "breakpoints": true
     }
   ]
 }

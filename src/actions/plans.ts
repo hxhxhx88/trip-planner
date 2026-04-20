@@ -23,21 +23,26 @@ const TzSchema = z.string().refine(
   { message: "Invalid IANA timezone" },
 );
 
+const LanguageSchema = z.enum(["en", "zh-TW"]);
 const CreatePlanInput = z.object({
   name: NameSchema,
   timezone: TzSchema,
   tzSetByUser: z.boolean().optional(),
+  language: LanguageSchema.optional(),
 });
 const RenamePlanInput = z.object({ id: PlanIdSchema, name: NameSchema });
 const DuplicatePlanInput = z.object({ id: PlanIdSchema });
 const DeletePlanInput = z.object({ id: PlanIdSchema });
 const SetTimezoneInput = z.object({ id: PlanIdSchema, timezone: TzSchema });
+const SetLanguageInput = z.object({ id: PlanIdSchema, language: LanguageSchema });
 
 export type CreatePlanInputType = z.input<typeof CreatePlanInput>;
 export type RenamePlanInputType = z.input<typeof RenamePlanInput>;
 export type DuplicatePlanInputType = z.input<typeof DuplicatePlanInput>;
 export type DeletePlanInputType = z.input<typeof DeletePlanInput>;
 export type SetTimezoneInputType = z.input<typeof SetTimezoneInput>;
+export type SetLanguageInputType = z.input<typeof SetLanguageInput>;
+export type PlanLanguage = z.infer<typeof LanguageSchema>;
 
 export async function createPlan(
   input: CreatePlanInputType,
@@ -51,6 +56,7 @@ export async function createPlan(
     name: parsed.data.name,
     timezone: parsed.data.timezone,
     tzSetByUser: parsed.data.tzSetByUser ?? false,
+    ...(parsed.data.language ? { language: parsed.data.language } : {}),
   });
   updateTag("plans:index");
   return ok({ id });
@@ -122,6 +128,25 @@ export async function setPlanTimezone(
   }
   updateTag("plans:index");
   updateTag(`plan:${id}`);
+  return ok();
+}
+
+export async function setPlanLanguage(
+  input: SetLanguageInputType,
+): Promise<Result> {
+  const parsed = SetLanguageInput.safeParse(input);
+  if (!parsed.success) return err(zodErr(parsed.error));
+
+  const res = await db
+    .update(schema.plans)
+    .set({ language: parsed.data.language, updatedAt: new Date() })
+    .where(eq(schema.plans.id, parsed.data.id))
+    .returning({ id: schema.plans.id });
+  if (res.length === 0) {
+    return err({ code: "not_found", message: "Plan not found" });
+  }
+  updateTag("plans:index");
+  updateTag(`plan:${parsed.data.id}`);
   return ok();
 }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { AdvancedMarker, Pin as VisPin } from "@vis.gl/react-google-maps";
-import { HomeIcon } from "lucide-react";
+import { HomeIcon, MapPinIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -60,6 +60,24 @@ export function LodgingPin({
           <HomeIcon className="size-3.5 text-white" />
         </VisPin>
       </SelectionHalo>
+    </AdvancedMarker>
+  );
+}
+
+export function PreviewPin({
+  position,
+  name,
+}: {
+  position: { lat: number; lng: number };
+  name: string;
+}) {
+  return (
+    <AdvancedMarker position={position} title={name} zIndex={1000}>
+      <div className="rounded-full ring-4 ring-amber-400/80">
+        <VisPin background="#f59e0b" glyphColor="#ffffff" borderColor="#b45309">
+          <MapPinIcon className="size-3.5 text-white" />
+        </VisPin>
+      </div>
     </AdvancedMarker>
   );
 }

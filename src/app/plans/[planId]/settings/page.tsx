@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { ArrowLeftIcon } from "lucide-react";
 
 import { DangerZone } from "@/components/plans/settings/DangerZone";
+import { LanguageForm } from "@/components/plans/settings/LanguageForm";
 import { RenamePlanForm } from "@/components/plans/settings/RenamePlanForm";
 import { TimezoneForm } from "@/components/plans/settings/TimezoneForm";
 import { Separator } from "@/components/ui/separator";
@@ -54,6 +55,7 @@ async function SettingsContent({
         </h2>
         <RenamePlanForm planId={plan.id} initialName={plan.name} />
         <TimezoneForm planId={plan.id} initialTimezone={plan.timezone} />
+        <LanguageForm planId={plan.id} initialLanguage={plan.language} />
       </section>
 
       <Separator className="my-10" />
