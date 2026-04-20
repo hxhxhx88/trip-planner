@@ -30,7 +30,10 @@ export async function runAutoFillForPlan(
   const routeFailures: RouteFailure[] = [];
   for (const day of initial.days) {
     const resolved = resolveDay(initial, day.id);
-    const { routeFailures: failed } = await backfillDay(resolved);
+    const { routeFailures: failed } = await backfillDay(
+      resolved,
+      initial.plan.language,
+    );
     routeFailures.push(...failed);
   }
 

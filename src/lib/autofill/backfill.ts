@@ -27,12 +27,16 @@ type DirectionsTask = {
 
 export async function backfillDay(
   day: ResolvedDay,
+  language: string,
 ): Promise<{ routeFailures: RouteFailure[] }> {
   const placeIds = collectPlaceIds(day);
   const directionsTasks = buildDirectionsTasks(day);
 
+  const placeOpts: { languageCode?: string } = {};
+  if (language !== "en") placeOpts.languageCode = language;
+
   const [, directionResults] = await Promise.all([
-    Promise.allSettled(placeIds.map((id) => getOrFetchPlaceDetails(id))),
+    Promise.allSettled(placeIds.map((id) => getOrFetchPlaceDetails(id, placeOpts))),
     Promise.allSettled(
       directionsTasks.map((task) =>
         getOrComputeDirections(task.origin, task.dest, task.vehicle),
