@@ -73,6 +73,10 @@ const VEHICLE_PATH_COLOR: Record<string, string> = {
 const DEFAULT_PATH_COLOR = "0x64748b";
 const EVENT_LABELS = "123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
+const SIMPLIFICATION_LADDER = [
+  1e-5, 2e-5, 5e-5, 1e-4, 2e-4, 5e-4, 1e-3, 2e-3, 5e-3, 1e-2,
+];
+
 export function buildStaticMapUrlForDay({
   day,
   events,
@@ -125,32 +129,43 @@ export function buildStaticMapUrlForDay({
     idx += 1;
   }
 
-  const paths: StaticMapPath[] = [];
+  const rawPaths: { points: [number, number][]; color: string }[] = [];
   for (const t of travels) {
     if (!t.routePath || t.routePath.length < 2) continue;
     const color = t.vehicle
       ? (VEHICLE_PATH_COLOR[t.vehicle] ?? DEFAULT_PATH_COLOR)
       : DEFAULT_PATH_COLOR;
-    paths.push({
-      encoded: encodePolyline(t.routePath),
-      color,
-      weight: 4,
-    });
+    rawPaths.push({ points: t.routePath, color });
   }
 
-  const url = buildStaticMapUrl({
-    size,
-    scale: 2,
-    markers,
-    paths,
-  });
-  if (url.length > STATIC_MAP_URL_LIMIT) {
-    throw new Error(
-      `Static map URL exceeds safe length (${url.length} chars) for day ${day.id}. ` +
-        `Simplify routePath or reduce waypoints.`,
-    );
+  const buildWith = (epsilon: number): string => {
+    const paths: StaticMapPath[] = [];
+    for (const rp of rawPaths) {
+      const pts = epsilon > 0 ? simplifyPath(rp.points, epsilon) : rp.points;
+      if (pts.length < 2) continue;
+      paths.push({ encoded: encodePolyline(pts), color: rp.color, weight: 4 });
+    }
+    return buildStaticMapUrl({ size, scale: 2, markers, paths });
+  };
+
+  let url = buildWith(0);
+  if (url.length <= STATIC_MAP_URL_LIMIT) return url;
+
+  for (const epsilon of SIMPLIFICATION_LADDER) {
+    url = buildWith(epsilon);
+    if (url.length <= STATIC_MAP_URL_LIMIT) {
+      console.info(
+        `[staticMap] simplified day ${day.id} to ${url.length} chars at epsilon ${epsilon}`,
+      );
+      return url;
+    }
   }
-  return url;
+
+  throw new Error(
+    `Static map URL still exceeds safe length (${url.length} chars) for day ${day.id} ` +
+      `after simplification up to epsilon ${SIMPLIFICATION_LADDER.at(-1)}. ` +
+      `Reduce waypoints or split the day.`,
+  );
 }
 
 export function encodePolyline(points: [number, number][]): string {
@@ -177,4 +192,53 @@ function encodeSigned(v: number): string {
   }
   out += String.fromCharCode(u + 63);
   return out;
+}
+
+function simplifyPath(
+  points: [number, number][],
+  epsilon: number,
+): [number, number][] {
+  if (points.length < 3 || epsilon <= 0) return points;
+  const keep = new Array<boolean>(points.length).fill(false);
+  keep[0] = true;
+  keep[points.length - 1] = true;
+  const stack: [number, number][] = [[0, points.length - 1]];
+  while (stack.length > 0) {
+    const [s, e] = stack.pop()!;
+    if (e <= s + 1) continue;
+    let maxD = 0;
+    let maxI = -1;
+    for (let i = s + 1; i < e; i++) {
+      const d = perpDistance(points[i], points[s], points[e]);
+      if (d > maxD) {
+        maxD = d;
+        maxI = i;
+      }
+    }
+    if (maxD > epsilon && maxI >= 0) {
+      keep[maxI] = true;
+      stack.push([s, maxI], [maxI, e]);
+    }
+  }
+  const out: [number, number][] = [];
+  for (let i = 0; i < points.length; i++) {
+    if (keep[i]) out.push(points[i]);
+  }
+  return out;
+}
+
+function perpDistance(
+  p: [number, number],
+  a: [number, number],
+  b: [number, number],
+): number {
+  const [px, py] = p;
+  const [ax, ay] = a;
+  const [bx, by] = b;
+  const dx = bx - ax;
+  const dy = by - ay;
+  if (dx === 0 && dy === 0) {
+    return Math.hypot(px - ax, py - ay);
+  }
+  return Math.abs(dx * (ay - py) - (ax - px) * dy) / Math.hypot(dx, dy);
 }
