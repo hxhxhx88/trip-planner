@@ -61,7 +61,7 @@ export function DayContent({
   };
 
   return (
-    <div className="space-y-4 p-6">
+    <div className="space-y-4 p-6 flex-1">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
